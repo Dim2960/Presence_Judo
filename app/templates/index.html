@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Accueil{% endblock %}
+{% block content %}
+<h1>Bienvenue {{ current_user.prenom }} </h1>
+
+<div class="boutton-select-space"><a href="{{ url_for('appel_menu') }}"><button class="boutton-select">Faire un appel</button></a></div>
+<div class="boutton-select-space"><a href="{{ url_for('Statistique_generale') }}"><button class="boutton-select">Statistiques</button></a></div>
+<div class="boutton-select-space"><a href="{{ url_for('menu_correction_appel') }}"><button class="boutton-select">Correction d'un appel</button></a></div>
+
+{% endblock %}

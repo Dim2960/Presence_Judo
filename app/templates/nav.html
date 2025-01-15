@@ -1,0 +1,47 @@
+{% if current_user.is_authenticated %}
+
+    <!-- Barre de navigation -->
+    <div class="navbar">
+        <!-- Bouton de retour -->
+        {% if request.endpoint != 'index' %}
+            <button class="btn-left" onclick="history.back()">← Retour</button>
+        {% endif %}
+
+        <!-- Bouton menu -->
+        <button class="btn-right" id="menuButton">Menu</button>
+
+    </div>
+
+    <!-- Contenu du menu -->
+    <ul id="menu">
+        <li><a href="{{ url_for('mon_profil') }}">Mon Profil</a></li>
+        <li><a href="{{ url_for('configuration_cours') }}">Configuration des Cours</a></li>
+        <li><br/></li>
+        <li><a href="{{ url_for('logout') }}">Déconnexion</a></li>
+    </ul>
+
+    <script>
+        // Références des éléments
+        const menuButton = document.getElementById('menuButton');
+        const menu = document.getElementById('menu');
+
+        // Gestionnaire de clic
+        menuButton.addEventListener('click', () => {
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                menu.style.display = 'block'; // Afficher le menu
+                menuButton.textContent = 'Fermer le Menu'; // Changer le texte du bouton
+            } else {
+                menu.style.display = 'none'; // Cacher le menu
+                menuButton.textContent = 'Menu'; // Revenir au texte initial
+            }
+        });
+    </script>
+
+{% else %}
+
+    <div class="navbar">
+        <a href="{{ url_for('login') }}"><button class="btn-con" >Connexion</button></a>
+        <a href="{{ url_for('register') }}"><button class="btn-enr" >Enregistrement</button></a>
+    </div>
+
+{% endif %}

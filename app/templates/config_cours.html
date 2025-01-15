@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Configurations{% endblock %}
+{% block content %}
+
+<h1>Configuration des cours</h1>
+
+<button>+ Ajout cours</button>
+
+<fieldset>
+    <legend>Ajout d'un cours</legend>
+
+    <table>
+        <tbody>
+            <tr>
+                <td>
+                    <form method="POST">
+                        <label>Nom du cours :</label>
+                        <input type="text" name="nom" required>
+                    </form>
+                <td>
+            </tr>
+        </tbody>
+    </table>
+
+</fieldset>
+<br/>
+<fieldset>
+    <legend>Cours</legend>
+
+    <table>
+        <tbody>
+            <tr>
+                <td>Cours ...</td>
+                <td>modif</td>
+                <td>supp</td>
+            </tr>
+        </tbody>
+    </table>
+</fieldset>
+
+{% endblock %}

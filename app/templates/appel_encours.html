@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% block title %}Appel en cours{% endblock %}
+{% block content %}
+<table>
+    <tr>
+        <td colspan = 2>
+            <h1>{{nom_cours}} <br/> {{today}} </h1>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <span id="count-present"></span> présents dont <span id="count-retard"></span> Retards
+            <br/>
+            <span id="count-absent"></span> Absents dont <span id="count-absent-justifie"></span> Absents justifiés
+        </td>
+        <td>
+                <button id="remaining-button" type="button">Restant à définir : <span id="count-non-defini"></span></button>
+                <button id="submit-attendance" type="button" style="display: none;">Envoyer</button>
+        </td>
+    </tr>
+</table>
+
+    <div class="swiper-container">
+        <div class="swiper-wrapper" id="swiper-wrapper"></div>
+    </div>
+
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+    <script>
+        const swiperWrapper = document.getElementById('swiper-wrapper');
+
+        // Objet pour suivre les personnes dont le statut a été défini
+        const statusTracker = {};
+        //Stockage des données d'appel pour envoie 
+        const attendanceData = {};
+
+        // Fonction pour mettre à jour le statut d'une personne
+        function updateStatus(personId, status, button) {
+            const timestamp = new Date().toISOString();
+            const id_cours = "{{ id_cours }}" ;
+
+            fetch('/api/updateStatus', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: personId, status: status })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la mise à jour du statut');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // // Mise à jour des données localement
+                attendanceData[personId] = { status, timestamp, id_cours};
+
+                // Réinitialiser les couleurs des autres boutons du même groupe
+                const groupButtons = button.closest('table').querySelectorAll('.action-button');
+                groupButtons.forEach(btn => {
+                    btn.classList.remove('success'); // Supprime la classe 'success' des autres boutons
+                    btn.style.backgroundColor = '#ccc'; // Réinitialise la couleur
+                });
+
+                // Si la mise à jour est réussie, changer la couleur du bouton en vert
+                button.classList.add('success');
+
+                // Décrémenter "non défini" seulement si le statut n'avait jamais été défini auparavant
+                if (!statusTracker[personId]) {
+                    const nonDefiniCountElement = document.getElementById('count-non-defini');
+                    const nonDefiniCount = parseInt(nonDefiniCountElement.innerText, 10);
+                    
+                    if (nonDefiniCount >= 0) {
+                        nonDefiniCountElement.innerText = nonDefiniCount - 1;
+                        data.status_counts['non_defini'] = nonDefiniCount - 1;
+                    }
+
+                    // Marquer cette personne comme ayant un statut défini
+                    statusTracker[personId] = true;
+                }
+                else{
+                    const nonDefiniCountElement = document.getElementById('count-non-defini');
+                    const nonDefiniCount = parseInt(nonDefiniCountElement.innerText, 10);
+
+                    if (nonDefiniCount >= 0) {
+                        nonDefiniCountElement.innerText = nonDefiniCount ;
+                        data.status_counts['non_defini'] = nonDefiniCount ;
+                    }
+
+                    }
+
+                // Vérifier si "Restant à définir" est à 0
+                checkRemainingCount();
+
+                // Mettre à jour les compteurs dynamiquement avec les données du serveur
+                if (data.status_counts) {
+                    document.getElementById('count-present').innerText = data.status_counts['present'] + data.status_counts['retard'];
+                    document.getElementById('count-absent').innerText = data.status_counts['absent'] + data.status_counts['absent_justifie'];
+                    document.getElementById('count-retard').innerText = data.status_counts['retard'];
+                    document.getElementById('count-absent-justifie').innerText = data.status_counts['absent_justifie'];
+                    document.getElementById('count-non-defini').innerText = data.status_counts['non_defini'];
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Une erreur s'est produite lors de la mise à jour du statut.");
+            });
+        }
+
+        
+
+        // Récupération des données
+        fetch('/api/people')
+            .then(response => response.json())
+            .then(data => {
+
+                data.forEach(person => {
+                    const slide = document.createElement('div');
+                    slide.className = 'swiper-slide';
+                    slide.setAttribute('data-id', person.id);
+
+                    slide.innerHTML = `
+                        <div>
+                            <h2>${person.PRENOM} ${person.NOM}</h2>
+                            <p>Sexe : ${person.SEXE}</p>
+                            <p>Licence : ${person.LICENCE}</p>
+                            <p>Date de Naissance : ${person.NAISSANCE}</p>        
+                            <div style="display: inline-flex; gap: 10px; margin-top: 20px;">
+                                <table>
+                                    <tr>
+                                        <td>
+                                            <button class="action-button absent-btn">Absent</button>
+                                        </td>
+                                        <td>
+                                            <button class="action-button present-btn">Présent</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <button class="action-button absent-justifie-btn">Absent justifié</button>
+                                        </td>
+                                        <td>
+                                            <button class="action-button retard-btn">Arrivé en retard</button>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+
+                    // Ajouter les listeners sur les boutons
+                    const absentBtn = slide.querySelector('.absent-btn');
+                    absentBtn.addEventListener('click', () => updateStatus(person.id, 'absent', absentBtn));
+
+                    const absentJustifieBtn = slide.querySelector('.absent-justifie-btn');
+                    absentJustifieBtn.addEventListener('click', () => updateStatus(person.id, 'absent_justifie', absentJustifieBtn));
+
+                    const retardBtn = slide.querySelector('.retard-btn');
+                    retardBtn.addEventListener('click', () => updateStatus(person.id, 'retard', retardBtn));
+
+                    const presentBtn = slide.querySelector('.present-btn');
+                    presentBtn.addEventListener('click', () => updateStatus(person.id, 'present', presentBtn));
+
+                    swiperWrapper.appendChild(slide);
+                });
+
+                initSwiper();
+                
+                 // Initialiser les compteurs
+                 fetch('/api/statusCounts') // Nouvelle API pour récupérer les compteurs au départ
+                    .then(response => response.json())
+                    .then(countData => {
+                        if (countData.status_counts) {
+                            document.getElementById('count-present').innerText = countData.status_counts['present'];
+                            document.getElementById('count-absent').innerText = countData.status_counts['absent'];
+                            document.getElementById('count-retard').innerText = countData.status_counts['retard'];
+                            document.getElementById('count-absent-justifie').innerText = countData.status_counts['absent_justifie'];
+                            document.getElementById('count-non-defini').innerText = countData.status_counts['non_defini'];
+                        }
+                    });
+
+
+            });
+
+
+
+
+
+        // Initialize Swiper
+        function initSwiper() {
+            const swiper = new Swiper('.swiper-container', {
+                loop: false,
+                on: {
+                    slideChangeTransitionEnd: function () {
+                        const activeSlide = swiper.slides[swiper.activeIndex];
+                        if (activeSlide) {
+                            console.log(activeSlide);
+                        }
+                    }
+                }
+            });
+        }
+
+        document.getElementById('submit-attendance').addEventListener('click', () => {
+            fetch('/api/submitAttendance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(attendanceData) // Envoi des données collectées
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur lors de l\'envoi des données');
+                }
+                // alert('Données envoyées avec succès !');
+
+                // Redirection vers la page d'accueil
+                window.location.href = '/';
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Une erreur s\'est produite lors de l\'envoi des données.');
+            });
+        });
+
+
+        // Fonction pour vérifier la valeur de "Restant à définir"
+        function checkRemainingCount() {
+            const nonDefiniCount = parseInt(document.getElementById('count-non-defini').innerText, 10);
+            const remainingButton = document.getElementById('remaining-button');
+            const submitButton = document.getElementById('submit-attendance');
+
+            if (nonDefiniCount === 0) {
+                remainingButton.style.display = 'none';
+                submitButton.style.display = 'block';
+            } else {
+                remainingButton.style.display = 'block';
+                submitButton.style.display = 'none';
+            }
+        }
+
+        // Appeler cette fonction initialement pour gérer l'état au chargement
+        checkRemainingCount();
+
+        // Mettre à jour les compteurs dynamiquement avec les données du serveur
+        if (data.status_counts) {
+            document.getElementById('count-present').innerText = data.status_counts['present'] + data.status_counts['retard'];
+            document.getElementById('count-absent').innerText = data.status_counts['absent'] + data.status_counts['absent_justifie'];
+            document.getElementById('count-retard').innerText = data.status_counts['retard'];
+            document.getElementById('count-absent-justifie').innerText = data.status_counts['absent_justifie'];
+            document.getElementById('count-non-defini').innerText = data.status_counts['non_defini'];
+            // Vérifier si "Restant à définir" est à 0
+            checkRemainingCount();
+        }
+
+
+
+
+    </script>
+
+
+
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Menu Appel{% endblock %}
+{% block content %}
+<h1>Menu appel</h1>
+
+
+{% for cours_item in cours %}
+<div class="boutton-select-space">
+    <form action="{{ url_for('appel_encours') }}" method="post">
+        <input type="hidden" name="nom_cours" value="{{ cours_item.nom_cours }}">
+        <input type="hidden" name="id_cours" value="{{ cours_item.id }}">
+        <button type="submit" class="boutton-select">{{ cours_item.nom_cours }}</button>
+    </form>
+</div>
+{% endfor %}
+
+{% endblock %}
+
