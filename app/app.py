@@ -2,10 +2,10 @@ from flask import Flask, render_template, redirect, url_for, request, flash, jso
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from decouple import config
 import pandas as pd
 from datetime import datetime
 import locale
+import os
 
 # locale.setlocale(locale.LC_TIME, 'fr_FR.UTF-8') # confi langue Française pour les dates
 
@@ -17,15 +17,29 @@ except locale.Error as e:
 
 app = Flask(__name__)
 
-app.config.from_mapping(
-    SECRET_KEY='your_secret_key',
+
+
+# db_user = os.getenv("AZURE_MYSQL_USERNAME")
+# db_password = os.getenv("AZURE_MYSQL_PASSWORD")
+# db_host = os.getenv("AZURE_MYSQL_HOST")
+# db_name = os.getenv("AZURE_MYSQL_DATABASE")
+# ssl_cert = os.getenv("MYSQL_SSL_CA")
+# db_DEBUG = os.getenv("DEBUG")
+
+
+db_user="xidnkathdd"
+db_password="JF0$AQTq0xQ9nAC4"
+db_name="judoapp-database"
+db_host="judoapp-server.mysql.database.azure.com:3306"
+ssl_cert = r"certs\DigiCertGlobalRootCA.crt.pem"
+
+app.config.update(
     SQLALCHEMY_DATABASE_URI=(
-        f'mysql+pymysql://{config("AZURE_MYSQL_USERNAME")}:{config("AZURE_MYSQL_PASSWORD")}@{config("AZURE_MYSQL_HOST")}/{config("AZURE_MYSQL_DATABASE")}?'
-        # f'ssl_ca={config("MYSQL_SSL_CA")}'
-    ),
-    SQLALCHEMY_TRACK_MODIFICATIONS=False,
-    DEBUG=config('DEBUG', default=False, cast=bool)
+        f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}?'
+        f'ssl_ca={ssl_cert}' 
+    )
 )
+
 # Initialise SQLAlchemy pour gérer la base de données.
 db = SQLAlchemy(app)
 #db.init_app(app)
@@ -218,6 +232,8 @@ def register():
         id_francejudo = request.form.get('idFranceJudo')
         pwd_francejudo = request.form.get('passwordFranceJudo')
 
+        flash('prenom')
+
         # Vérification des mots de passe
         if first_password != second_password:
             flash('Les mots de passe ne correspondent pas.')
@@ -258,7 +274,8 @@ def register():
         except Exception as e:
             db.session.rollback()  # Annuler les changements en cas d'erreur
             flash('Une erreur est survenue lors de la création du compte.')
-            print(f"Erreur : {e}")  # Log pour débogage
+            print(f"Erreur lors de la création du compte : {e.__class__.__name__} - {e}")
+
 
     return render_template('register.html')
 
