@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Register{% endblock %}
 {% block content %}
-<h1>Nouvel enregistrement</h1>
 
 {% with messages = get_flashed_messages() %}
 {% if messages %}
@@ -13,21 +12,29 @@
 {% endif %}
 {% endwith %}
 
-<form method="POST">
-    <label>Prénom :</label>
-    <input type="text" name="prenom" required>
-    <label>Nom :</label>
-    <input type="text" name="nom" required>
-    <label>Email:</label>
-    <input type="email" name="email" required>
-    <label>Mot de passe :</label>
-    <input type="password" name="firstpassword" required>
-    <label>Confirmation mot de passe :</label>
-    <input type="password" name="secondpassword" required>
-    <label>Identifiant France Judo:</label>
-    <input type="text" name="idFranceJudo" >
-    <label>Mot de passe France Judo:</label>
-    <input type="password" name="passwordFranceJudo" >
-    <button type="submit">Envoyer</button>
-</form>
+<div class="form-container">
+    <div class="image-container">
+        <img src="static/images/user-icon.png" alt="User Icon">
+    </div>
+
+    <h1>Nouvel enregistrement</h1>
+    
+    <form method="POST">
+        <label>Prénom :</label>
+        <input type="text" name="prenom" required>
+        <label>Nom :</label>
+        <input type="text" name="nom" required>
+        <label>Email:</label>
+        <input type="email" name="email" required>
+        <label>Mot de passe :</label>
+        <input type="password" name="firstpassword" required>
+        <label>Confirmation mot de passe :</label>
+        <input type="password" name="secondpassword" required>
+        <label>Identifiant France Judo:</label>
+        <input type="text" name="idFranceJudo" >
+        <label>Mot de passe France Judo:</label>
+        <input type="password" name="passwordFranceJudo" >
+        <button type="submit">Envoyer</button>
+    </form>
+</div>
 {% endblock %}

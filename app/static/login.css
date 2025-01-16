@@ -1,0 +1,132 @@
+
+  
+  /* ---------------------------
+     CONTENEUR DU FORMULAIRE
+  --------------------------- */
+  .form-container {
+    background: #f7f9fa; /* Blanc cassé / gris très clair */
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 350px;
+    padding: 2rem;
+    position: relative;
+    position: relative; /* Indispensable */
+    width: 350px;
+    margin: 2rem auto;
+  }
+  
+  .image-container {
+    width: 80px;
+    height: 80px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    
+    /* Centrer au-dessus du formulaire */
+    position: absolute;
+    top: -40px;           /* Fait dépasser de 40px en haut */
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Si vous souhaitez que l'image s'adapte au cercle */
+    overflow: hidden;
+  }
+
+  /* Ajustement de l’image */
+.image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* L’image se centre/couvre le cercle */
+    display: block;
+  }
+
+
+  /* Pour placer l'icône utilisateur au-dessus, si besoin */
+  .form-container::before {
+    content: ""; /* Exemple d’icône Font Awesome si vous l’utilisez (code unicode) */
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 50px;
+    color: #6ea0d4; 
+    background: #ffffff;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: -40px;       /* la moitié de la hauteur pour le centrer */
+    left: calc(50% - 40px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  /* ---------------------------
+     MISE EN FORME DES MESSAGES
+  --------------------------- */
+  .flashes {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1rem;
+  }
+  
+  .flashes li {
+    background: #edf4ff;
+    color: #1b4b7d;
+    padding: 0.5rem 1rem;
+    margin-bottom: 0.5rem;
+    border-left: 4px solid #6ea0d4;
+    border-radius: 3px;
+  }
+  
+  /* ---------------------------
+     FORMULAIRE
+  --------------------------- */
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Label */
+  form label {
+    margin-bottom: 0.3rem;
+    font-weight: bold;
+    color: #555;
+  }
+  
+  /* Champs de saisie */
+  form input[type="text"],
+  form input[type="email"],
+  form input[type="password"] {
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+  }
+  
+  /* Focus sur le champ */
+  form input[type="text"],
+  form input[type="email"]:focus,
+  form input[type="password"]:focus {
+    border-color: #6ea0d4;
+    box-shadow: 0 0 5px rgba(110, 160, 212, 0.3);
+  }
+  
+  /* Bouton de connexion */
+  form button[type="submit"] {
+    background: #6ea0d4; /* Bleu principal */
+    color: #fff;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background 0.3s ease;
+  }
+  
+  form button[type="submit"]:hover {
+    background: #5e8fc0; /* Assombri au survol */
+  }
+  

@@ -1,23 +1,34 @@
 {% extends 'base.html' %}
 {% block title %}Login{% endblock %}
 {% block content %}
-<h1>Login</h1>
 
-{% with messages = get_flashed_messages() %}
-{% if messages %}
+
+  
+
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
     <ul class="flashes">
-    {% for message in messages %}
+      {% for message in messages %}
         <li>{{ message }}</li>
-    {% endfor %}
+      {% endfor %}
     </ul>
-{% endif %}
-{% endwith %}
+  {% endif %}
+  {% endwith %}
 
-<form method="POST">
-    <label>Email:</label>
-    <input type="email" name="email" required>
-    <label>Password:</label>
-    <input type="password" name="password" required>
-    <button type="submit">Login</button>
-</form>
+  <!-- Conteneur pour le style -->
+  <div class="form-container">
+    <div class="image-container">
+        <img src="static/images/user-icon.png" alt="User Icon">
+    </div>
+
+    <h1>Connexion</h1>
+    
+    <form method="POST">
+      <label>Email:</label>
+      <input type="email" name="email" required>
+      <label>Password:</label>
+      <input type="password" name="password" required>
+      <button type="submit">Login</button>
+    </form>
+  </div>
 {% endblock %}
