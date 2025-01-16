@@ -91,12 +91,14 @@
                 checkRemainingCount();
 
                 // Mettre à jour les compteurs dynamiquement avec les données du serveur
-                if (data.status_counts) {
+                if (data && data.status_counts) {
                     document.getElementById('count-present').innerText = data.status_counts['present'] + data.status_counts['retard'];
                     document.getElementById('count-absent').innerText = data.status_counts['absent'] + data.status_counts['absent_justifie'];
                     document.getElementById('count-retard').innerText = data.status_counts['retard'];
                     document.getElementById('count-absent-justifie').innerText = data.status_counts['absent_justifie'];
                     document.getElementById('count-non-defini').innerText = data.status_counts['non_defini'];
+                } else {
+                    console.error('Les données de statusCounts sont invalides ou absentes');
                 }
             })
             .catch(error => {
@@ -175,10 +177,13 @@
                             document.getElementById('count-absent-justifie').innerText = countData.status_counts['absent_justifie'];
                             document.getElementById('count-non-defini').innerText = countData.status_counts['non_defini'];
                         }
-                    });
-
-
+                    })
+            .catch(error => {
+                console.error(error);
+                alert("Une erreur s'est produite lors de la API people.");
+                })
             });
+            
 
 
 

@@ -18,7 +18,6 @@ except locale.Error as e:
 app = Flask(__name__)
 
 
-
 # db_user = os.getenv("AZURE_MYSQL_USERNAME")
 # db_password = os.getenv("AZURE_MYSQL_PASSWORD")
 # db_host = os.getenv("AZURE_MYSQL_HOST")
@@ -31,13 +30,16 @@ db_user="xidnkathdd"
 db_password="JF0$AQTq0xQ9nAC4"
 db_name="judoapp-database"
 db_host="judoapp-server.mysql.database.azure.com:3306"
-ssl_cert = r"certs\DigiCertGlobalRootCA.crt.pem"
+ssl_cert = "certs/DigiCertGlobalRootCA.crt.pem"
+db_DEBUG=True
 
 app.config.update(
     SQLALCHEMY_DATABASE_URI=(
         f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}?'
         f'ssl_ca={ssl_cert}' 
-    )
+    ),
+    SECRET_KEY=os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
+    # DEBUG=os.environ.get("DEBUG", "False").lower() in ["true", "1"]
 )
 
 # Initialise SQLAlchemy pour gérer la base de données.
@@ -307,6 +309,7 @@ def appel_menu() :
 def appel_encours():
     nom_cours = request.form.get('nom_cours')
     id_cours = request.form.get('id_cours')
+
     global id_cours_cache
     id_cours_cache = id_cours
     today = datetime.now().strftime("%A %d %B %Y")
@@ -336,10 +339,12 @@ def menu_correction_appel() :
 @login_required
 def get_people():
     """Send list of people."""
-    global data_cache, id_cours_cache  # Accéder au cache
-    data_cache = {}
+    global data_cache#, id_cours_cache
+    # Accéder au cache
+    # data_cache = {}
+    id_cours = id_cours_cache
+
     try:
-        id_cours = id_cours_cache
         if id_cours is None:
             return jsonify({"error": "id_cours est requis."}), 400
 
@@ -410,6 +415,7 @@ def get_status_counts():
 @login_required
 def update_status():
     try:
+        
         data = request.get_json()
 
         person_id = data.get('id')

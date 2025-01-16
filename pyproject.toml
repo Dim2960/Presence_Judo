@@ -3,7 +3,7 @@ name = "presence-judo"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
             "flask>=3.1.0",
             "flask-login>=0.6.3",
@@ -11,5 +11,4 @@ dependencies = [
             "gunicorn>=23.0.0",
             "pandas>=2.2.3",
             "pymysql>=1.1.1",
-            "python-decouple>=3.8",
 ]
