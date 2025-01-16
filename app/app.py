@@ -33,6 +33,8 @@ db_host="judoapp-server.mysql.database.azure.com:3306"
 ssl_cert = "certs/DigiCertGlobalRootCA.crt.pem"
 db_DEBUG=True
 
+
+
 app.config.update(
     SQLALCHEMY_DATABASE_URI=(
         f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}?'

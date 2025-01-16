@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 {% block title %}Appel en cours{% endblock %}
 {% block content %}
+
+<div class="form-container-appel">
+    <div class="image-container">
+        <img src="static/images/user-icon.png" alt="User Icon">
+    </div>
+
 <table>
     <tr>
         <td colspan = 2>
@@ -9,13 +15,13 @@
     </tr>
     <tr>
         <td>
-            <span id="count-present"></span> présents dont <span id="count-retard"></span> Retards
+            <span id="count-present"></span> présents
             <br/>
-            <span id="count-absent"></span> Absents dont <span id="count-absent-justifie"></span> Absents justifiés
+            <span id="count-absent"></span> Absents
         </td>
         <td>
                 <button id="remaining-button" type="button">Restant à définir : <span id="count-non-defini"></span></button>
-                <button id="submit-attendance" type="button" style="display: none;">Envoyer</button>
+                <button id="submit-attendance" type="submit" >Envoyer</button>
         </td>
     </tr>
 </table>
@@ -260,6 +266,6 @@
 
     </script>
 
-
+</div>
 
 {% endblock %}

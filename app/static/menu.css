@@ -1,69 +1,6 @@
 
 
 
-
-/* Style des boutons */
-.boutton-select  {
-  background: linear-gradient(90deg, #007bff, #0056b3);
-  border: none;
-  color: white;
-  padding: 15px 25px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  border-radius: 5px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
-}
-
-.boutton-select :hover {
-  transform: scale(1.1);
-  box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
-}
-
-.boutton-select :active {
-  transform: scale(1);
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
-}
-
-.boutton-select-space {
-  margin: 20px;
-  text-align: center;
-}
-
-/*uniquement pour l appel en cours*/
-.swiper-container {
-  width: 100%;
-  height: 100%;
-}
-.swiper-slide {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  font-size: 24px;
-}
-.action-button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  background: #ccc;
-  cursor: pointer;
-}
-.action-button:hover {
-  background: #bbb;
-}
-.action-button.success {
-  background: green !important;
-  color: #fff;
-}
-
-
-
-
 /*pour le menu*/
 
       /* Styles pour la barre de navigation */
