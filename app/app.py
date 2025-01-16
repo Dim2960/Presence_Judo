@@ -396,12 +396,12 @@ def get_status_counts():
         # Calculer les compteurs
         status_counts = {}
 
-        # Compléter les statuts avec zéro
-        all_statuses = ['present', 'absent', 'retard', 'absent_justifie', 'non_defini']
-        status_counts = {status: status_counts.get(status, 0) for status in all_statuses}
+        # # Compléter les statuts avec zéro
+        # all_statuses = ['present', 'absent', 'retard', 'absent_justifie', 'non_defini']
+        # status_counts = {status: status_counts.get(status, 0) for status in all_statuses}
 
-        # Comptage du nombre de personne total du groupe
-        status_counts['non_defini'] = int(data_cache[id_cours_cache]['id'].count())
+        # # Comptage du nombre de personne total du groupe
+        # status_counts['non_defini'] = int(data_cache[id_cours_cache]['id'].count())
 
         return jsonify({"status_counts": status_counts}), 200
 
