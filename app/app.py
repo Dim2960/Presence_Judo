@@ -309,7 +309,6 @@ def appel_menu() :
 def appel_encours():
     nom_cours = request.form.get('nom_cours')
     id_cours = request.form.get('id_cours')
-
     global id_cours_cache
     id_cours_cache = id_cours
     today = datetime.now().strftime("%A %d %B %Y")
@@ -339,12 +338,10 @@ def menu_correction_appel() :
 @login_required
 def get_people():
     """Send list of people."""
-    global data_cache#, id_cours_cache
-    # Accéder au cache
-    # data_cache = {}
-    id_cours = id_cours_cache
-
+    global data_cache, id_cours_cache  # Accéder au cache
+    data_cache = {}
     try:
+        id_cours = id_cours_cache
         if id_cours is None:
             return jsonify({"error": "id_cours est requis."}), 400
 
@@ -396,12 +393,12 @@ def get_status_counts():
         # Calculer les compteurs
         status_counts = {}
 
-        # # Compléter les statuts avec zéro
-        # all_statuses = ['present', 'absent', 'retard', 'absent_justifie', 'non_defini']
-        # status_counts = {status: status_counts.get(status, 0) for status in all_statuses}
+        # Compléter les statuts avec zéro
+        all_statuses = ['present', 'absent', 'retard', 'absent_justifie', 'non_defini']
+        status_counts = {status: status_counts.get(status, 0) for status in all_statuses}
 
-        # # Comptage du nombre de personne total du groupe
-        # status_counts['non_defini'] = int(data_cache[id_cours_cache]['id'].count())
+        # Comptage du nombre de personne total du groupe
+        status_counts['non_defini'] = int(data_cache[id_cours_cache]['id'].count())
 
         return jsonify({"status_counts": status_counts}), 200
 
@@ -415,7 +412,6 @@ def get_status_counts():
 @login_required
 def update_status():
     try:
-        
         data = request.get_json()
 
         person_id = data.get('id')

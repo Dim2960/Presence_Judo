@@ -90,16 +90,16 @@
                 // Vérifier si "Restant à définir" est à 0
                 checkRemainingCount();
 
-                // // Mettre à jour les compteurs dynamiquement avec les données du serveur
-                // if (data && data.status_counts) {
-                //     document.getElementById('count-present').innerText = data.status_counts['present'] + data.status_counts['retard'];
-                //     document.getElementById('count-absent').innerText = data.status_counts['absent'] + data.status_counts['absent_justifie'];
-                //     document.getElementById('count-retard').innerText = data.status_counts['retard'];
-                //     document.getElementById('count-absent-justifie').innerText = data.status_counts['absent_justifie'];
-                //     document.getElementById('count-non-defini').innerText = data.status_counts['non_defini'];
-                // } else {
-                //     console.error('Les données de statusCounts sont invalides ou absentes');
-                // }
+                // Mettre à jour les compteurs dynamiquement avec les données du serveur
+                if (data && data.status_counts) {
+                    document.getElementById('count-present').innerText = data.status_counts['present'] + data.status_counts['retard'];
+                    document.getElementById('count-absent').innerText = data.status_counts['absent'] + data.status_counts['absent_justifie'];
+                    document.getElementById('count-retard').innerText = data.status_counts['retard'];
+                    document.getElementById('count-absent-justifie').innerText = data.status_counts['absent_justifie'];
+                    document.getElementById('count-non-defini').innerText = data.status_counts['non_defini'];
+                } else {
+                    console.error('Les données de statusCounts sont invalides ou absentes');
+                }
             })
             .catch(error => {
                 console.error(error);
