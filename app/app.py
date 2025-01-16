@@ -18,20 +18,15 @@ except locale.Error as e:
 app = Flask(__name__)
 
 
-# db_user = os.getenv("AZURE_MYSQL_USERNAME")
-# db_password = os.getenv("AZURE_MYSQL_PASSWORD")
-# db_host = os.getenv("AZURE_MYSQL_HOST")
-# db_name = os.getenv("AZURE_MYSQL_DATABASE")
-# ssl_cert = os.getenv("MYSQL_SSL_CA")
-# db_DEBUG = os.getenv("DEBUG")
+db_user = os.getenv("AZURE_MYSQL_USERNAME")
+db_password = os.getenv("AZURE_MYSQL_PASSWORD")
+db_host = os.getenv("AZURE_MYSQL_HOST")
+db_name = os.getenv("AZURE_MYSQL_DATABASE")
+ssl_cert = os.getenv("MYSQL_SSL_CA")
+db_DEBUG = os.getenv("DEBUG")
 
 
-db_user="xidnkathdd"
-db_password="JF0$AQTq0xQ9nAC4"
-db_name="judoapp-database"
-db_host="judoapp-server.mysql.database.azure.com:3306"
-ssl_cert = "certs/DigiCertGlobalRootCA.crt.pem"
-db_DEBUG=True
+
 
 
 
