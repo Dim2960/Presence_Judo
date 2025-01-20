@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
+from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -16,15 +16,23 @@ except locale.Error as e:
     print(f"Warning: Locale not supported. Defaulting to system settings. Error: {e}")
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # Nécessaire pour utiliser la session
 
 
-db_user = os.getenv("AZURE_MYSQL_USERNAME")
-db_password = os.getenv("AZURE_MYSQL_PASSWORD")
-db_host = os.getenv("AZURE_MYSQL_HOST")
-db_name = os.getenv("AZURE_MYSQL_DATABASE")
-ssl_cert = os.getenv("MYSQL_SSL_CA")
-db_DEBUG = os.getenv("DEBUG")
+# db_user = os.getenv("AZURE_MYSQL_USERNAME")
+# db_password = os.getenv("AZURE_MYSQL_PASSWORD")
+# db_host = os.getenv("AZURE_MYSQL_HOST")
+# db_name = os.getenv("AZURE_MYSQL_DATABASE")
+# ssl_cert = os.getenv("MYSQL_SSL_CA")
+# db_DEBUG = os.getenv("DEBUG")
 
+
+db_user="xidnkathdd"
+db_password="JF0$AQTq0xQ9nAC4"
+db_name="judoapp-database"
+db_host="judoapp-server.mysql.database.azure.com:3306"
+ssl_cert = "certs/DigiCertGlobalRootCA.crt.pem"
+db_DEBUG=True
 
 
 
@@ -57,11 +65,6 @@ Extration des data eleves + tratiaement pour trie par cours
 
 ## todo : ajouter la cte pour modifier les cours si la colonne modif cours ref est à 1 en fonction de la table de relation des modif cours
 
-
-
-global id_cours_cache, data_cache
-id_cours_cache = int()
-data_cache = {}
 
 """
 Fin extraction data eleves
@@ -306,8 +309,11 @@ def appel_menu() :
 def appel_encours():
     nom_cours = request.form.get('nom_cours')
     id_cours = request.form.get('id_cours')
-    global id_cours_cache
-    id_cours_cache = id_cours
+
+    # Stocker dans la session
+    session['id_cours'] = id_cours
+    session['data_cache'] = dict()
+
     today = datetime.now().strftime("%A %d %B %Y")
 
     return render_template('appel_encours.html', nom_cours=nom_cours, id_cours=id_cours, today=today)
@@ -335,46 +341,49 @@ def menu_correction_appel() :
 @login_required
 def get_people():
     """Send list of people."""
-    global data_cache, id_cours_cache  # Accéder au cache
-    data_cache = {}
     try:
-        id_cours = id_cours_cache
+        # Récupérer depuis la session
+        id_cours = session.get('id_cours')
+        data_cache = pd.DataFrame(session.get('data_cache'))
+
         if id_cours is None:
             return jsonify({"error": "id_cours est requis."}), 400
 
-        # Vérifier si les données sont en cache
-        if id_cours in data_cache:
-            filtered_df = data_cache[id_cours]
-        else:
-            # Charger les données depuis la base si non en cache
-            query_with_filter = f"""
-            WITH AgeCalculation AS (
-                SELECT 
-                    j.*, 
-                    CASE 
-                        WHEN MONTH(CURRENT_DATE) < 9 THEN YEAR(CURRENT_DATE) - 1
-                        ELSE YEAR(CURRENT_DATE)
-                    END - YEAR(j.NAISSANCE) AS age_reference
-                FROM judoka j
-            ),
-            CategorieAgeJoin AS (
-                SELECT 
-                    ac.*, 
-                    c.id AS id_categorie_age
-                FROM AgeCalculation ac
-                JOIN categorie_age c
-                    ON ac.age_reference BETWEEN c.age_mini AND c.age_maxi
-            )
+
+        # Charger les données depuis la base si non en cache
+        query_with_filter = f"""
+        WITH AgeCalculation AS (
             SELECT 
-                caj.*, 
-                rcca.id_cours
-            FROM CategorieAgeJoin caj
-            JOIN relation_cours_categorie_age rcca
-                ON caj.id_categorie_age = rcca.id_categorie_age
-            WHERE rcca.id_cours = {int(id_cours)};
-            """
-            filtered_df = pd.read_sql(query_with_filter, db.engine, params={"id_cours": int(id_cours)})
-            data_cache[id_cours] = filtered_df  # Stocker en cache
+                j.*, 
+                CASE 
+                    WHEN MONTH(CURRENT_DATE) < 9 THEN YEAR(CURRENT_DATE) - 1
+                    ELSE YEAR(CURRENT_DATE)
+                END - YEAR(j.NAISSANCE) AS age_reference
+            FROM judoka j
+        ),
+        CategorieAgeJoin AS (
+            SELECT 
+                ac.*, 
+                c.id AS id_categorie_age
+            FROM AgeCalculation ac
+            JOIN categorie_age c
+                ON ac.age_reference BETWEEN c.age_mini AND c.age_maxi
+        )
+        SELECT 
+            caj.*, 
+            rcca.id_cours
+        FROM CategorieAgeJoin caj
+        JOIN relation_cours_categorie_age rcca
+            ON caj.id_categorie_age = rcca.id_categorie_age
+        WHERE rcca.id_cours = {int(id_cours)};
+        """
+
+        filtered_df = pd.read_sql(query_with_filter, db.engine, params={"id_cours": int(id_cours)})
+        filtered_df['status'] = 'non_defini'
+        filtered_df = filtered_df.reset_index()
+
+        session['data_cache'] = filtered_df.to_dict(orient='records')  
+
 
         return jsonify(
                 filtered_df.to_dict(orient='records')
@@ -386,16 +395,29 @@ def get_people():
 @app.route('/api/statusCounts', methods=['GET'])
 @login_required
 def get_status_counts():
+
     try:
         # Calculer les compteurs
         status_counts = {}
+        # Récupérer depuis la session
+        id_cours = session.get('id_cours')
+        data_cache = pd.DataFrame(session.get('data_cache'))
+
+        print("id cours : ", id_cours)
+        print("data_cache : --> ", data_cache)
 
         # Compléter les statuts avec zéro
         all_statuses = ['present', 'absent', 'retard', 'absent_justifie', 'non_defini']
         status_counts = {status: status_counts.get(status, 0) for status in all_statuses}
 
-        # Comptage du nombre de personne total du groupe
-        status_counts['non_defini'] = int(data_cache[id_cours_cache]['id'].count())
+        # # Comptage du nombre de personne total du groupe
+        status_counts['total'] = data_cache[data_cache['id_cours']==id_cours].count()
+
+        print(status_counts)
+
+        # session['data_cache'] = data_cache.to_dict(orient='records') 
+
+        print(jsonify({"status_counts": status_counts}))
 
         return jsonify({"status_counts": status_counts}), 200
 
@@ -408,35 +430,50 @@ def get_status_counts():
 @app.route('/api/updateStatus', methods=['POST'])
 @login_required
 def update_status():
+
     try:
         data = request.get_json()
+        # Récupérer depuis la session
+        id_cours = session.get('id_cours')
+
+        data_cache = pd.DataFrame(session.get('data_cache'))
+        # print(data_cache)
 
         person_id = data.get('id')
         status = data.get('status')
 
+
         if person_id is None or status is None:
             return jsonify({"error": "Données invalides : id et status requis."}), 400
 
-        if data_cache[id_cours_cache] is None or 'id' not in data_cache[id_cours_cache].columns:
+        if data_cache[data_cache['id_cours']==id_cours] is None or 'id' not in data_cache[data_cache['id_cours']==id_cours].columns:
             return jsonify({"error": "Données introuvables ou structure invalide."}), 500
-
+        
+ 
         # Trouver l'index correspondant
-        index = data_cache[id_cours_cache].index[data_cache[id_cours_cache]['id'] == person_id].tolist()
+        index = data_cache.index[data_cache['id'] == person_id].tolist()
+
         if not index:
             return jsonify({"error": f"ID {person_id} introuvable."}), 404
 
+
         # Mettre à jour le statut
-        data_cache[id_cours_cache].loc[index[0], 'status'] = status
-    
+        data_cache.loc[index[0], 'status'] = status
+
+     
         # Calculer les compteurs de chaque statut
-        status_counts = data_cache[id_cours_cache]['status'].value_counts().to_dict()
+        status_counts = data_cache['status'].value_counts().to_dict()
 
         # Compléter les statuts manquants avec zéro
         all_statuses = ['present', 'absent', 'retard', 'absent_justifie', 'non_defini']
         status_counts = {status: status_counts.get(status, 0) for status in all_statuses}
 
         # Comptage du nombre de personne total du groupe
-        status_counts['non_defini'] = int(data_cache[id_cours_cache]['id'].count())
+        status_counts['non_defini'] = int(data_cache['id'].count())
+
+        print(data_cache)
+
+        session['data_cache'] = data_cache.to_dict(orient='records') 
 
         return jsonify({
             "message": f"Statut mis à jour pour ID {person_id}.",

@@ -2,7 +2,7 @@
 {% block title %}Appel en cours{% endblock %}
 {% block content %}
 
-<div class="form-container">
+<div class="form-container-appel">
 
     <div class="image-container">
         <img src="static/images/user-icon.png" alt="User Icon">
@@ -31,9 +31,12 @@
 
     <div class="swiper-container">
         <div class="swiper-wrapper" id="swiper-wrapper"></div>
+    </div>
+</div>
     
 
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+                 
     <script>
         
         const swiperWrapper = document.getElementById('swiper-wrapper');
@@ -46,76 +49,75 @@
         // Fonction pour mettre à jour le statut d'une personne
         function updateStatus(personId, status, button) {
             const timestamp = new Date().toISOString();
-            const id_cours = "{{ id_cours }}" ;
+            const id_cours = "{{ session.get('id_cours') }}" ;
 
             fetch('/api/updateStatus', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: personId, status: status })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erreur lors de la mise à jour du statut');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // // Mise à jour des données localement
-                attendanceData[personId] = { status, timestamp, id_cours};
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erreur lors de la mise à jour du statut');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // // Mise à jour des données localement
+                    attendanceData[personId] = { status, timestamp, id_cours};
 
-                // Réinitialiser les couleurs des autres boutons du même groupe
-                const groupButtons = button.closest('table').querySelectorAll('.action-button');
-                groupButtons.forEach(btn => {
-                    btn.classList.remove('success'); // Supprime la classe 'success' des autres boutons
-                    btn.style.backgroundColor = '#ccc'; // Réinitialise la couleur
-                });
+                    // Réinitialiser les couleurs des autres boutons du même groupe
+                    const groupButtons = button.closest('table').querySelectorAll('.action-button');
+                    groupButtons.forEach(btn => {
+                        btn.classList.remove('success'); // Supprime la classe 'success' des autres boutons
+                        btn.style.backgroundColor = '#ccc'; // Réinitialise la couleur
+                    });
 
-                // Si la mise à jour est réussie, changer la couleur du bouton en vert
-                button.classList.add('success');
+                    // Si la mise à jour est réussie, changer la couleur du bouton en vert
+                    button.classList.add('success');
 
-                // Décrémenter "non défini" seulement si le statut n'avait jamais été défini auparavant
-                if (!statusTracker[personId]) {
-                    const nonDefiniCountElement = document.getElementById('count-non-defini');
-                    const nonDefiniCount = parseInt(nonDefiniCountElement.innerText, 10);
+                    // Décrémenter "non défini" seulement si le statut n'avait jamais été défini auparavant
+                    if (!statusTracker[personId]) {
+                        const nonDefiniCountElement = document.getElementById('count-non-defini');
+                        const nonDefiniCount = parseInt(nonDefiniCountElement.innerText, 10);
+                        
+                        if (nonDefiniCount >= 0) {
+                            nonDefiniCountElement.innerText = nonDefiniCount - 1;
+                            data.status_counts['non_defini'] = nonDefiniCount - 1;
+                        }
+
+                        // Marquer cette personne comme ayant un statut défini
+                        statusTracker[personId] = true;
+                    }
+                    else{
+                        const nonDefiniCountElement = document.getElementById('count-non-defini');
+                        const nonDefiniCount = parseInt(nonDefiniCountElement.innerText, 10);
+
+                        if (nonDefiniCount >= 0) {
+                            nonDefiniCountElement.innerText = nonDefiniCount ;
+                            data.status_counts['non_defini'] = nonDefiniCount ;
+                        }
+                        }
                     
-                    if (nonDefiniCount >= 0) {
-                        nonDefiniCountElement.innerText = nonDefiniCount - 1;
-                        data.status_counts['non_defini'] = nonDefiniCount - 1;
+                    // Vérifier si "Restant à définir" est à 0
+                    // checkRemainingCount();
+
+                    // Mettre à jour les compteurs dynamiquement avec les données du serveur
+                    if (data.status_counts) {
+                        document.getElementById('count-present').innerText = data.status_counts['present'] + data.status_counts['retard'];
+                        document.getElementById('count-absent').innerText = data.status_counts['absent'] + data.status_counts['absent_justifie'];
+                        document.getElementById('count-retard').innerText = data.status_counts['retard'];
+                        document.getElementById('count-absent-justifie').innerText = data.status_counts['absent_justifie'];
+                        document.getElementById('count-non-defini').innerText = data.status_counts['non_defini'];
+                    } else {
+                        console.error('Les données de statusCounts sont invalides ou absentes');
                     }
-
-                    // Marquer cette personne comme ayant un statut défini
-                    statusTracker[personId] = true;
-                }
-                else{
-                    const nonDefiniCountElement = document.getElementById('count-non-defini');
-                    const nonDefiniCount = parseInt(nonDefiniCountElement.innerText, 10);
-
-                    if (nonDefiniCount >= 0) {
-                        nonDefiniCountElement.innerText = nonDefiniCount ;
-                        data.status_counts['non_defini'] = nonDefiniCount ;
-                    }
-
-                    }
-
-                // Vérifier si "Restant à définir" est à 0
-                checkRemainingCount();
-
-                // Mettre à jour les compteurs dynamiquement avec les données du serveur
-                if (data && data.status_counts) {
-                    document.getElementById('count-present').innerText = data.status_counts['present'] + data.status_counts['retard'];
-                    document.getElementById('count-absent').innerText = data.status_counts['absent'] + data.status_counts['absent_justifie'];
-                    document.getElementById('count-retard').innerText = data.status_counts['retard'];
-                    document.getElementById('count-absent-justifie').innerText = data.status_counts['absent_justifie'];
-                    document.getElementById('count-non-defini').innerText = data.status_counts['non_defini'];
-                } else {
-                    console.error('Les données de statusCounts sont invalides ou absentes');
-                }
-            })
-            .catch(error => {
-                console.error(error);
-                alert("Une erreur s'est produite lors de la mise à jour du statut.");
-            });
-        }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Une erreur s'est produite lors de la mise à jour du statut.");
+                });
+            }
 
         
 
@@ -172,28 +174,32 @@
                     presentBtn.addEventListener('click', () => updateStatus(person.id, 'present', presentBtn));
 
                     swiperWrapper.appendChild(slide);
+                })
+                })
+                .catch(error => {
+                console.error(error);
+                alert("Une erreur s'est produite lors de la API people.");
+
                 });
 
                 initSwiper();
                 
-                 // Initialiser les compteurs
-                 fetch('/api/statusCounts') // Nouvelle API pour récupérer les compteurs au départ
-                    .then(response => response.json())
-                    .then(countData => {
-                        if (countData.status_counts) {
-                            document.getElementById('count-present').innerText = countData.status_counts['present'];
-                            document.getElementById('count-absent').innerText = countData.status_counts['absent'];
-                            document.getElementById('count-retard').innerText = countData.status_counts['retard'];
-                            document.getElementById('count-absent-justifie').innerText = countData.status_counts['absent_justifie'];
-                            document.getElementById('count-non-defini').innerText = countData.status_counts['non_defini'];
-                        }
-                    })
+        //  Initialiser les compteurs
+        fetch('/api/statusCounts') // Nouvelle API pour récupérer les compteurs au départ
+            .then(response => response.json())
+            .then(countData => {
+                if (countData.status_counts) {
+                    document.getElementById('count-present').innerText = countData.status_counts['present'];
+                    document.getElementById('count-absent').innerText = countData.status_counts['absent'];
+                    document.getElementById('count-retard').innerText = countData.status_counts['retard'];
+                    document.getElementById('count-absent-justifie').innerText = countData.status_counts['absent_justifie'];
+                    document.getElementById('count-non-defini').innerText = countData.status_counts['non_defini'];
+                }
+             })
             .catch(error => {
                 console.error(error);
-                alert("Une erreur s'est produite lors de la API people.");
-                })
-            });
-            
+                alert("Une erreur s'est produite lors de la status count people.");
+                });            
 
 
 
@@ -249,27 +255,26 @@
                 remainingButton.style.display = 'block';
                 submitButton.style.display = 'none';
             }
+
         }
 
         // Appeler cette fonction initialement pour gérer l'état au chargement
-        checkRemainingCount();
+        // checkRemainingCount();
 
-        // Mettre à jour les compteurs dynamiquement avec les données du serveur
-        if (data.status_counts) {
-            document.getElementById('count-present').innerText = data.status_counts['present'] + data.status_counts['retard'];
-            document.getElementById('count-absent').innerText = data.status_counts['absent'] + data.status_counts['absent_justifie'];
-            document.getElementById('count-retard').innerText = data.status_counts['retard'];
-            document.getElementById('count-absent-justifie').innerText = data.status_counts['absent_justifie'];
-            document.getElementById('count-non-defini').innerText = data.status_counts['non_defini'];
-            // Vérifier si "Restant à définir" est à 0
-            checkRemainingCount();
-        }
+        // // Mettre à jour les compteurs dynamiquement avec les données du serveur
+        // if (data.status_counts) {
+        //     document.getElementById('count-present').innerText = data.status_counts['present'] + data.status_counts['retard'];
+        //     document.getElementById('count-absent').innerText = data.status_counts['absent'] + data.status_counts['absent_justifie'];
+        //     document.getElementById('count-retard').innerText = data.status_counts['retard'];
+        //     document.getElementById('count-absent-justifie').innerText = data.status_counts['absent_justifie'];
+        //     document.getElementById('count-non-defini').innerText = data.status_counts['non_defini'];
+        //     // Vérifier si "Restant à définir" est à 0
+        //     checkRemainingCount();
+        // }
 
 
 
 
     </script>
-    </div>
-</div>
 
 {% endblock %}

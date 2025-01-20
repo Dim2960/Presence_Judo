@@ -9,9 +9,12 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     width: 350px;
     padding: 2rem;
-    position: relative;
-    position: relative; /* Indispensable */
-    width: 350px;
+    /* position: relative;
+    position: relative; Indispensable */
+    position: absolute; /* Passe à une position absolue */
+    top: 0px; /* Positionne à 20px du haut de la page */
+    left: 2.5%; /* Centre horizontalement */
+    width: 95vw;
     margin: 2rem auto;
     margin-top : 110px;
     padding-top: 50px
