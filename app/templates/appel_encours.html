@@ -99,19 +99,8 @@
                         }
                         }
                     
-                    // Vérifier si "Restant à définir" est à 0
-                    // checkRemainingCount();
 
-                    // Mettre à jour les compteurs dynamiquement avec les données du serveur
-                    if (data.status_counts) {
-                        document.getElementById('count-present').innerText = data.status_counts['present'] + data.status_counts['retard'];
-                        document.getElementById('count-absent').innerText = data.status_counts['absent'] + data.status_counts['absent_justifie'];
-                        document.getElementById('count-retard').innerText = data.status_counts['retard'];
-                        document.getElementById('count-absent-justifie').innerText = data.status_counts['absent_justifie'];
-                        document.getElementById('count-non-defini').innerText = data.status_counts['non_defini'];
-                    } else {
-                        console.error('Les données de statusCounts sont invalides ou absentes');
-                    }
+
                 })
                 .catch(error => {
                     console.error(error);
@@ -184,26 +173,6 @@
 
                 initSwiper();
                 
-        //  Initialiser les compteurs
-        fetch('/api/statusCounts') // Nouvelle API pour récupérer les compteurs au départ
-            .then(response => response.json())
-            .then(countData => {
-                if (countData.status_counts) {
-                    document.getElementById('count-present').innerText = countData.status_counts['present'];
-                    document.getElementById('count-absent').innerText = countData.status_counts['absent'];
-                    document.getElementById('count-retard').innerText = countData.status_counts['retard'];
-                    document.getElementById('count-absent-justifie').innerText = countData.status_counts['absent_justifie'];
-                    document.getElementById('count-non-defini').innerText = countData.status_counts['non_defini'];
-                }
-             })
-            .catch(error => {
-                console.error(error);
-                alert("Une erreur s'est produite lors de la status count people.");
-                });            
-
-
-
-
 
         // Initialize Swiper
         function initSwiper() {
@@ -240,38 +209,6 @@
                 alert('Une erreur s\'est produite lors de l\'envoi des données.');
             });
         });
-
-
-        // Fonction pour vérifier la valeur de "Restant à définir"
-        function checkRemainingCount() {
-            const nonDefiniCount = parseInt(document.getElementById('count-non-defini').innerText, 10);
-            const remainingButton = document.getElementById('remaining-button');
-            const submitButton = document.getElementById('submit-attendance');
-
-            if (nonDefiniCount === 0) {
-                remainingButton.style.display = 'none';
-                submitButton.style.display = 'block';
-            } else {
-                remainingButton.style.display = 'block';
-                submitButton.style.display = 'none';
-            }
-
-        }
-
-        // Appeler cette fonction initialement pour gérer l'état au chargement
-        // checkRemainingCount();
-
-        // // Mettre à jour les compteurs dynamiquement avec les données du serveur
-        // if (data.status_counts) {
-        //     document.getElementById('count-present').innerText = data.status_counts['present'] + data.status_counts['retard'];
-        //     document.getElementById('count-absent').innerText = data.status_counts['absent'] + data.status_counts['absent_justifie'];
-        //     document.getElementById('count-retard').innerText = data.status_counts['retard'];
-        //     document.getElementById('count-absent-justifie').innerText = data.status_counts['absent_justifie'];
-        //     document.getElementById('count-non-defini').innerText = data.status_counts['non_defini'];
-        //     // Vérifier si "Restant à définir" est à 0
-        //     checkRemainingCount();
-        // }
-
 
 
 

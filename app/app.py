@@ -71,6 +71,7 @@ Fin extraction data eleves
 """
 
 
+
 # Modèle User
 class User(db.Model):
     __tablename__ = 'user'
@@ -184,6 +185,12 @@ def load_user(user_id):
 @app.route('/')
 @login_required
 def index():
+    # Initialisation des variables de session si elles n'existent pas encore
+    if 'data_cache' not in session:
+        session['data_cache'] = dict()
+    if 'id_cours' not in session:
+        session['id_cours'] = 0
+
     return render_template('index.html')  
 
 
@@ -311,8 +318,10 @@ def appel_encours():
     id_cours = request.form.get('id_cours')
 
     # Stocker dans la session
+    if session['id_cours'] != id_cours:
+        session['data_cache'] = dict()
+
     session['id_cours'] = id_cours
-    session['data_cache'] = dict()
 
     today = datetime.now().strftime("%A %d %B %Y")
 
@@ -344,7 +353,6 @@ def get_people():
     try:
         # Récupérer depuis la session
         id_cours = session.get('id_cours')
-        data_cache = pd.DataFrame(session.get('data_cache'))
 
         if id_cours is None:
             return jsonify({"error": "id_cours est requis."}), 400
@@ -375,7 +383,7 @@ def get_people():
         FROM CategorieAgeJoin caj
         JOIN relation_cours_categorie_age rcca
             ON caj.id_categorie_age = rcca.id_categorie_age
-        WHERE rcca.id_cours = {int(id_cours)};
+        WHERE rcca.id_cours = {id_cours};
         """
 
         filtered_df = pd.read_sql(query_with_filter, db.engine, params={"id_cours": int(id_cours)})
@@ -383,7 +391,6 @@ def get_people():
         filtered_df = filtered_df.reset_index()
 
         session['data_cache'] = filtered_df.to_dict(orient='records')  
-
 
         return jsonify(
                 filtered_df.to_dict(orient='records')
@@ -403,9 +410,6 @@ def get_status_counts():
         id_cours = session.get('id_cours')
         data_cache = pd.DataFrame(session.get('data_cache'))
 
-        print("id cours : ", id_cours)
-        print("data_cache : --> ", data_cache)
-
         # Compléter les statuts avec zéro
         all_statuses = ['present', 'absent', 'retard', 'absent_justifie', 'non_defini']
         status_counts = {status: status_counts.get(status, 0) for status in all_statuses}
@@ -413,11 +417,7 @@ def get_status_counts():
         # # Comptage du nombre de personne total du groupe
         status_counts['total'] = data_cache[data_cache['id_cours']==id_cours].count()
 
-        print(status_counts)
 
-        # session['data_cache'] = data_cache.to_dict(orient='records') 
-
-        print(jsonify({"status_counts": status_counts}))
 
         return jsonify({"status_counts": status_counts}), 200
 
@@ -437,7 +437,7 @@ def update_status():
         id_cours = session.get('id_cours')
 
         data_cache = pd.DataFrame(session.get('data_cache'))
-        # print(data_cache)
+
 
         person_id = data.get('id')
         status = data.get('status')
@@ -471,9 +471,8 @@ def update_status():
         # Comptage du nombre de personne total du groupe
         status_counts['non_defini'] = int(data_cache['id'].count())
 
-        print(data_cache)
-
         session['data_cache'] = data_cache.to_dict(orient='records') 
+
 
         return jsonify({
             "message": f"Statut mis à jour pour ID {person_id}.",
