@@ -17,9 +17,9 @@
             </tr>
             <tr>
                 <td>
-                    <span id="count-present"></span> présents
+                    <span id="count-present">0</span> présents
                     <br/>
-                    <span id="count-absent"></span> Absents
+                    <span id="count-absent">0</span> Absents
                 </td>
                 <td>
                         <button id="remaining-button" type="button">Restant à définir : <span id="count-non-defini"></span></button>
@@ -46,68 +46,99 @@
         //Stockage des données d'appel pour envoie 
         const attendanceData = {};
 
-        // Fonction pour mettre à jour le statut d'une personne
+        // Fonction pour vérifier la valeur de "Restant à définir"
+        function checkRemainingCount() {
+            const nonDefiniCount = parseInt(document.getElementById('count-non-defini').innerText, 10);
+            const remainingButton = document.getElementById('remaining-button');
+            const submitButton = document.getElementById('submit-attendance');
+
+            if (nonDefiniCount === 0) {
+                remainingButton.style.display = 'none';
+                submitButton.style.display = 'block';
+            } else {
+                remainingButton.style.display = 'block';
+                submitButton.style.display = 'none';
+            }
+
+        }
+
+        function updateCounters() {
+            // Récupération des compteurs à partir des éléments HTML
+            const presentCountElement = document.getElementById('count-present');
+            const absentCountElement = document.getElementById('count-absent');
+            const nonDefiniCountElement = document.getElementById('count-non-defini');
+
+            // Compter le nombre de statuts dans `attendanceData`
+            let presentCount = 0;
+            let absentCount = 0;
+            let nonDefiniCount = 0;
+
+            for (const [id, data] of Object.entries(attendanceData)) {
+                switch (data.status) {
+                    case 'present':
+                        presentCount++;
+                        break;
+                    case 'absent':
+                        absentCount++;
+                        break;
+                    case 'retard':
+                        presentCount++;
+                        break;
+                    case 'absent_justifie':
+                        absentCount++;
+                        break;
+                    default:
+                        nonDefiniCount++;
+                        break;
+                }
+            }
+
+            // Mettre à jour les valeurs affichées
+            presentCountElement.innerText = presentCount;
+            absentCountElement.innerText = absentCount;
+            nonDefiniCountElement.innerText = Object.keys(attendanceData).length - presentCount - absentCount;
+        
+            checkRemainingCount();
+
+        }
+
+        // Modifier la fonction de mise à jour de statut pour appeler `updateCounters`
         function updateStatus(personId, status, button) {
             const timestamp = new Date().toISOString();
-            const id_cours = "{{ session.get('id_cours') }}" ;
+            const id_cours = "{{ session.get('id_cours') }}";
 
             fetch('/api/updateStatus', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: personId, status: status })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erreur lors de la mise à jour du statut');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // // Mise à jour des données localement
-                    attendanceData[personId] = { status, timestamp, id_cours};
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la mise à jour du statut');
+                }
+                return response.json();
+            })
+            .then(data => {
+                attendanceData[personId] = { status, timestamp, id_cours };
 
-                    // Réinitialiser les couleurs des autres boutons du même groupe
-                    const groupButtons = button.closest('table').querySelectorAll('.action-button');
-                    groupButtons.forEach(btn => {
-                        btn.classList.remove('success'); // Supprime la classe 'success' des autres boutons
-                        btn.style.backgroundColor = '#ccc'; // Réinitialise la couleur
-                    });
-
-                    // Si la mise à jour est réussie, changer la couleur du bouton en vert
-                    button.classList.add('success');
-
-                    // Décrémenter "non défini" seulement si le statut n'avait jamais été défini auparavant
-                    if (!statusTracker[personId]) {
-                        const nonDefiniCountElement = document.getElementById('count-non-defini');
-                        const nonDefiniCount = parseInt(nonDefiniCountElement.innerText, 10);
-                        
-                        if (nonDefiniCount >= 0) {
-                            nonDefiniCountElement.innerText = nonDefiniCount - 1;
-                            data.status_counts['non_defini'] = nonDefiniCount - 1;
-                        }
-
-                        // Marquer cette personne comme ayant un statut défini
-                        statusTracker[personId] = true;
-                    }
-                    else{
-                        const nonDefiniCountElement = document.getElementById('count-non-defini');
-                        const nonDefiniCount = parseInt(nonDefiniCountElement.innerText, 10);
-
-                        if (nonDefiniCount >= 0) {
-                            nonDefiniCountElement.innerText = nonDefiniCount ;
-                            data.status_counts['non_defini'] = nonDefiniCount ;
-                        }
-                        }
-                    
-
-
-                })
-                .catch(error => {
-                    console.error(error);
-                    alert("Une erreur s'est produite lors de la mise à jour du statut.");
+                // Réinitialiser les couleurs des autres boutons du même groupe
+                const groupButtons = button.closest('table').querySelectorAll('.action-button');
+                groupButtons.forEach(btn => {
+                    btn.classList.remove('success');
+                    btn.style.backgroundColor = '#ccc';
                 });
-            }
 
+                // Marquer le bouton sélectionné
+                button.classList.add('success');
+
+                // Mettre à jour les compteurs
+                updateCounters();
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Une erreur s'est produite lors de la mise à jour du statut.");
+            });
+        }
         
 
         // Récupération des données
@@ -116,6 +147,7 @@
             .then(data => {
 
                 data.forEach(person => {
+                    attendanceData[person.id] = { status: 'non_defini', timestamp: null, id_cours: "{{ session.get('id_cours') }}" };
                     const slide = document.createElement('div');
                     slide.className = 'swiper-slide';
                     slide.setAttribute('data-id', person.id);
@@ -163,6 +195,9 @@
                     presentBtn.addEventListener('click', () => updateStatus(person.id, 'present', presentBtn));
 
                     swiperWrapper.appendChild(slide);
+
+                    updateCounters();
+                    checkRemainingCount();
                 })
                 })
                 .catch(error => {
@@ -171,9 +206,9 @@
 
                 });
 
-                initSwiper();
-                
 
+        initSwiper();
+                
         // Initialize Swiper
         function initSwiper() {
             const swiper = new Swiper('.swiper-container', {
@@ -209,7 +244,6 @@
                 alert('Une erreur s\'est produite lors de l\'envoi des données.');
             });
         });
-
 
 
     </script>
