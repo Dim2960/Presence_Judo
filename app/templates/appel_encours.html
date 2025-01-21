@@ -8,11 +8,12 @@
         <img src="static/images/user-icon.png" alt="User Icon">
     </div>
 
-    <table>
+    <table class="table-cours">
         <tbody>
             <tr>
                 <td colspan = 2>
-                    <h1>{{nom_cours}} </h1><h2> {{today}} </h2> 
+                    <h1>{{nom_cours}} </h1>
+                    <h2> {{today}} </h2> 
                 </td>
             </tr>
             <tr>
@@ -22,8 +23,8 @@
                     <span id="count-absent">0</span> Absents
                 </td>
                 <td>
-                        <button id="remaining-button" type="button">Restant à définir : <span id="count-non-defini"></span></button>
-                        <button id="submit-attendance" type="submit" >Envoyer</button>
+                        <button class="button-submit" id="remaining-button" type="button">Restant à définir : <span id="count-non-defini"></span></button>
+                        <button class="button-submit" id="submit-attendance" type="submit" >Valider l'appel</button>
                 </td>
             </tr>
         </tbody>
@@ -149,7 +150,7 @@
                 const groupButtons = button.closest('table').querySelectorAll('.action-button');
                 groupButtons.forEach(btn => {
                     btn.classList.remove('success');
-                    btn.style.backgroundColor = '#ccc';
+                    // btn.style.backgroundColor = '#ccc';
                 });
 
                 // Marquer le bouton sélectionné
@@ -161,7 +162,6 @@
                 // Vérifier si swiper est défini avant de changer de slide
                 if (swiper) {
                     swiper.slideNext();
-                    console.error("Swiper est initialisé");
                 } else {
                     console.error("Swiper n'est pas encore initialisé");
                 }
@@ -186,13 +186,14 @@
                     slide.setAttribute('data-id', person.id);
 
                     slide.innerHTML = `
-                        <div>
+                    <div class="container">
+                        <div class="profile-card">
                             <h2>${person.PRENOM} ${person.NOM}</h2>
                             <button hidden  onclick="swiper.slideNext()">Next Slide</button>
                             <p>Sexe : ${person.SEXE}</p>
-                            <p>Licence : ${person.LICENCE}</p>
+                            <p>Licencié(e) : ${person.LICENCE}</p>
                             <p>Date de Naissance : ${person.NAISSANCE}</p>        
-                            <div style="display: inline-flex; gap: 10px; margin-top: 20px;">
+                            <div class="button-container">
                                 <table>
                                     <tr>
                                         <td>
@@ -213,6 +214,7 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
                     `;
 
                     // Ajouter les listeners sur les boutons

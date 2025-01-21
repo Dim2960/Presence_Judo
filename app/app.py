@@ -389,6 +389,14 @@ def get_people():
         filtered_df['status'] = 'non_defini'
         filtered_df = filtered_df.reset_index()
 
+        
+        # retravail des infos pour affichage
+        filtered_df['SEXE'] = filtered_df['SEXE'].apply(lambda x: 'Féminine' if x == 'F' else 'Masculin')
+        filtered_df['NAISSANCE'] = pd.to_datetime(filtered_df['NAISSANCE'])
+        filtered_df['NAISSANCE'] = filtered_df['NAISSANCE'].dt.strftime('%d/%m/%Y')
+        filtered_df['LICENCE'] = filtered_df['LICENCE'].apply(lambda x: 'Oui' if x != "" else 'Non')
+        
+
         session['data_cache'] = filtered_df.to_dict(orient='records')  
 
         return jsonify(
@@ -397,32 +405,6 @@ def get_people():
     except Exception as e:
         return jsonify({"error": f"Erreur lors de la récupération des données : {str(e)}"}), 500
 
-
-# @app.route('/api/statusCounts', methods=['GET'])
-# @login_required
-# def get_status_counts():
-
-#     try:
-#         # Calculer les compteurs
-#         status_counts = {}
-#         # Récupérer depuis la session
-#         id_cours = session.get('id_cours')
-#         data_cache = pd.DataFrame(session.get('data_cache'))
-
-#         # Compléter les statuts avec zéro
-#         all_statuses = ['present', 'absent', 'retard', 'absent_justifie', 'non_defini']
-#         status_counts = {status: status_counts.get(status, 0) for status in all_statuses}
-
-#         # # Comptage du nombre de personne total du groupe
-#         status_counts['total'] = data_cache[data_cache['id_cours']==id_cours].count()
-
-
-
-#         return jsonify({"status_counts": status_counts}), 200
-
-#     except Exception as e:
-#         print("Erreur serveur get_statusCounts:", str(e))
-#         return jsonify({"error": "Erreur interne du serveur."}), 500
 
 
 
