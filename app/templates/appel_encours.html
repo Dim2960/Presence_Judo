@@ -46,6 +46,30 @@
         //Stockage des données d'appel pour envoie 
         const attendanceData = {};
 
+        let swiper;
+
+    
+        function initSwiper() {
+            swiper = new Swiper('.swiper-container', {
+                loop: false,
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                on: {
+                    slideChangeTransitionEnd: function () {
+                        console.log('Slide changed to:', swiper.activeIndex);
+                    }
+                }
+            });
+        }
+
+        // Initialiser le swiper après le chargement de la page
+        document.addEventListener('DOMContentLoaded', () => {
+            initSwiper();
+        });
+
+
         // Fonction pour vérifier la valeur de "Restant à définir"
         function checkRemainingCount() {
             const nonDefiniCount = parseInt(document.getElementById('count-non-defini').innerText, 10);
@@ -133,6 +157,17 @@
 
                 // Mettre à jour les compteurs
                 updateCounters();
+
+                // Vérifier si swiper est défini avant de changer de slide
+                if (swiper) {
+                    swiper.slideNext();
+                    console.error("Swiper est initialisé");
+                    alert("c'est swipe")
+                } else {
+                    console.error("Swiper n'est pas encore initialisé");
+                    alert("c'est pas swipe")
+                }
+
             })
             .catch(error => {
                 console.error(error);
@@ -198,6 +233,7 @@
 
                     updateCounters();
                     checkRemainingCount();
+
                 })
                 })
                 .catch(error => {
@@ -207,22 +243,6 @@
                 });
 
 
-        initSwiper();
-                
-        // Initialize Swiper
-        function initSwiper() {
-            const swiper = new Swiper('.swiper-container', {
-                loop: false,
-                on: {
-                    slideChangeTransitionEnd: function () {
-                        const activeSlide = swiper.slides[swiper.activeIndex];
-                        if (activeSlide) {
-                            console.log(activeSlide);
-                        }
-                    }
-                }
-            });
-        }
 
         document.getElementById('submit-attendance').addEventListener('click', () => {
             fetch('/api/submitAttendance', {
