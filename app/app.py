@@ -37,7 +37,6 @@ db_DEBUG=True
 
 
 
-
 app.config.update(
     SQLALCHEMY_DATABASE_URI=(
         f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}?'

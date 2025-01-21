@@ -162,10 +162,8 @@
                 if (swiper) {
                     swiper.slideNext();
                     console.error("Swiper est initialisé");
-                    alert("c'est swipe")
                 } else {
                     console.error("Swiper n'est pas encore initialisé");
-                    alert("c'est pas swipe")
                 }
 
             })
@@ -190,6 +188,7 @@
                     slide.innerHTML = `
                         <div>
                             <h2>${person.PRENOM} ${person.NOM}</h2>
+                            <button hidden  onclick="swiper.slideNext()">Next Slide</button>
                             <p>Sexe : ${person.SEXE}</p>
                             <p>Licence : ${person.LICENCE}</p>
                             <p>Date de Naissance : ${person.NAISSANCE}</p>        
