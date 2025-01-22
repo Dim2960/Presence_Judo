@@ -6,8 +6,13 @@ import pandas as pd
 from datetime import datetime
 import locale
 import os
+from dotenv import load_dotenv
 
-# locale.setlocale(locale.LC_TIME, 'fr_FR.UTF-8') # confi langue Française pour les dates
+
+# Charger les variables d'environnement depuis le fichier .env à supp si deploiement azure 
+# + supp commentaire ligne 38 (# f'ssl_ca={ssl_cert}')
+# + inversioin dans la main de la ligne commentée et non commentée
+load_dotenv()
 
 
 try:
@@ -19,28 +24,19 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Nécessaire pour utiliser la session
 
 
-# db_user = os.getenv("AZURE_MYSQL_USERNAME")
-# db_password = os.getenv("AZURE_MYSQL_PASSWORD")
-# db_host = os.getenv("AZURE_MYSQL_HOST")
-# db_name = os.getenv("AZURE_MYSQL_DATABASE")
-# ssl_cert = os.getenv("MYSQL_SSL_CA")
-# db_DEBUG = os.getenv("DEBUG")
-
-
-db_user="xidnkathdd"
-db_password="JF0$AQTq0xQ9nAC4"
-db_name="judoapp-database"
-db_host="judoapp-server.mysql.database.azure.com:3306"
-ssl_cert = "certs/DigiCertGlobalRootCA.crt.pem"
-db_DEBUG=True
-
-
+db_user = os.getenv("AZURE_MYSQL_USERNAME")
+db_password = os.getenv("AZURE_MYSQL_PASSWORD")
+db_host = os.getenv("AZURE_MYSQL_HOST")
+db_name = os.getenv("AZURE_MYSQL_DATABASE")
+ssl_cert = os.getenv("MYSQL_SSL_CA")
+db_DEBUG = os.getenv("DEBUG")
 
 
 app.config.update(
     SQLALCHEMY_DATABASE_URI=(
+        # f"mysql+pymysql://root:Dimarion1708&@localhost/presenceJudo"
         f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}?'
-        f'ssl_ca={ssl_cert}' 
+        # f'ssl_ca={ssl_cert}' 
     ),
     SECRET_KEY=os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
     # DEBUG=os.environ.get("DEBUG", "False").lower() in ["true", "1"]
@@ -230,6 +226,7 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    print('register essai pas bien')
     if request.method == 'POST':
         # Récupération des données du formulaire
         prenom = request.form.get('prenom')
@@ -391,7 +388,7 @@ def get_people():
 
         
         # retravail des infos pour affichage
-        filtered_df['SEXE'] = filtered_df['SEXE'].apply(lambda x: 'Féminine' if x == 'F' else 'Masculin')
+        filtered_df['SEXE'] = filtered_df['SEXE'].apply(lambda x: 'Féminin' if x == 'F' else 'Masculin')
         filtered_df['NAISSANCE'] = pd.to_datetime(filtered_df['NAISSANCE'])
         filtered_df['NAISSANCE'] = filtered_df['NAISSANCE'].dt.strftime('%d/%m/%Y')
         filtered_df['LICENCE'] = filtered_df['LICENCE'].apply(lambda x: 'Oui' if x != "" else 'Non')
@@ -523,6 +520,6 @@ def logout():
 
 
 if __name__ == '__main__':
-    # app.run(debug=True)
-    app.run(debug=True, host='0.0.0.0', port=80)
+    app.run(debug=True)
+    # app.run(debug=True, host='0.0.0.0', port=80)
 

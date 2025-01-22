@@ -129,6 +129,7 @@
     font-size: 1rem;
     font-weight: 600;
     transition: background 0.3s ease;
+    margin-bottom: 15px;
   }
   
   form button[type="submit"]:hover {

@@ -10,7 +10,7 @@
     <h1>Choix du cours</h1>
 
     <form action="{{ url_for('menu_correction_appel') }}" method="post">
-        <button type="button">Correction du dernier appel</button>
+        <button type="submit">Correction du dernier appel</button>
     </form>
 
     {% for cours_item in cours %}
