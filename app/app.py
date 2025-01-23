@@ -310,6 +310,13 @@ def appel_menu() :
     
     return render_template('appel_menu.html', cours=cours)
 
+@app.route('/correction_appel', methods=['POST'])
+@login_required
+def correction_appel():
+
+
+    return render_template('correction_appel.html')
+
 
 
 @app.route('/appel_encours', methods=['POST'])

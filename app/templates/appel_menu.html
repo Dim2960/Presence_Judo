@@ -31,7 +31,7 @@ fetch('/api/checkAppelStatus')
                 const form = document.getElementById(`form-${item.id}`);
                 if (form) {
                     if (item.cours_today) {
-                        form.action = "{{ url_for('menu_correction_appel') }}";                    
+                        form.action = "{{ url_for('correction_appel') }}";                    
                         const button = document.getElementById(`button-${item.id}`);
                                 
                         if (button) {
