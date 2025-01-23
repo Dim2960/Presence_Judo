@@ -20,8 +20,6 @@ try:
 except locale.Error as e:
     print(f"Warning: Locale not supported. Defaulting to system settings. Error: {e}")
 
-app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Nécessaire pour utiliser la session
 
 
 db_user = os.getenv("AZURE_MYSQL_USERNAME")
@@ -30,6 +28,11 @@ db_host = os.getenv("AZURE_MYSQL_HOST")
 db_name = os.getenv("AZURE_MYSQL_DATABASE")
 ssl_cert = os.getenv("MYSQL_SSL_CA")
 db_DEBUG = os.getenv("DEBUG")
+secret_key = os.getenv("FLASK_SECRET_KEY")
+
+
+app = Flask(__name__)
+app.secret_key = secret_key # Nécessaire pour utiliser la session
 
 
 app.config.update(
@@ -157,8 +160,9 @@ class Appel(db.Model):
     absent = db.Column(db.Boolean, nullable=False, default=False)
     retard = db.Column(db.Boolean, nullable=False, default=False)
     absence_excuse = db.Column(db.Boolean, nullable=False, default=False)
+    id_appel = db.Column(db.Numeric(10, 6), nullable=False)
 
-    def __init__(self, id_judoka, id_cours, timestamp_appel, present, absent, retard, absence_excuse):
+    def __init__(self, id_judoka, id_cours, timestamp_appel, present, absent, retard, absence_excuse, id_appel):
         self.id_judoka = id_judoka
         self.id_cours = id_cours
         self.timestamp_appel = timestamp_appel
@@ -166,6 +170,7 @@ class Appel(db.Model):
         self.absent = absent
         self.retard = retard
         self.absence_excuse = absence_excuse
+        self.id_appel = id_appel
 
 
 
@@ -226,7 +231,7 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    print('register essai pas bien')
+
     if request.method == 'POST':
         # Récupération des données du formulaire
         prenom = request.form.get('prenom')
@@ -405,6 +410,46 @@ def get_people():
 
 
 
+@app.route('/api/checkAppelStatus')
+@login_required
+def checkappelDateCours():
+    try:
+        # Charger les données 
+        query_with_filter = f"""
+            WITH LatestAppel AS (
+                SELECT 
+                    id_cours, 
+                    MAX(timestamp_appel) AS last_appel
+                FROM 
+                    appel
+                GROUP BY 
+                    id_cours
+            )
+            SELECT 
+                c.id, 
+                la.last_appel
+            FROM 
+                cours c
+            LEFT JOIN 
+                LatestAppel la ON c.id = la.id_cours;
+        """
+
+        df = pd.read_sql(query_with_filter, db.engine)
+
+        df['cours_today'] = df['last_appel'].apply(lambda x: x == datetime.now().date() if x is not None else False)
+
+        print(df)
+        
+        return jsonify(
+                df.to_dict(orient='records')
+                )
+    
+    except Exception as e:
+        return jsonify({"error": f"Erreur lors de la récupération des données Checkcouple idcours et date : {str(e)}"}), 500
+
+
+
+
 @app.route('/api/updateStatus', methods=['POST'])
 @login_required
 def update_status():
@@ -473,12 +518,15 @@ def submit_attendance():
     try:
         if data is None:
             return jsonify({"error": "No data provided"}), 400
+        
+        id_appel = datetime.now().timestamp()
 
         for id_judoka, details in data.items():
             # Extraire les champs nécessaires
             id_cours = details.get('id_cours')
             timestamp = datetime.strptime(details.get('timestamp'), '%Y-%m-%dT%H:%M:%S.%fZ')
             status = details.get('status')
+            
 
             # Mapper le statut aux colonnes boolean
             present = status == 'present'
@@ -494,7 +542,8 @@ def submit_attendance():
                 present=bool(present),
                 absent= bool(absent),
                 retard= bool(retard),
-                absence_excuse=bool(absence_excuse)
+                absence_excuse=bool(absence_excuse),
+                id_appel=str(id_appel)
             )
             
             # Ajouter à la session

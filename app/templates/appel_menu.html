@@ -9,21 +9,49 @@
 
     <h1>Choix du cours</h1>
 
-    <form action="{{ url_for('menu_correction_appel') }}" method="post">
-        <button type="submit">Correction du dernier appel</button>
-    </form>
-
     {% for cours_item in cours %}
 
-        <form action="{{ url_for('appel_encours') }}" method="post">
+        <form id="form-{{ cours_item.id }}" action="{{ url_for('appel_encours') }}" method="post">
             <input type="hidden" name="nom_cours" value="{{ cours_item.nom_cours }}">
             <input type="hidden" name="id_cours" value="{{ cours_item.id }}">
-            <button type="submit">{{ cours_item.nom_cours }}</button>
+            <button type="submit" id="button-{{ cours_item.id }}">{{ cours_item.nom_cours }}</button>
         </form>
 
     {% endfor %}
 
 </div>
+
+<script>
+// Récupération des données
+
+fetch('/api/checkAppelStatus')
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(item => {
+                const form = document.getElementById(`form-${item.id}`);
+                if (form) {
+                    if (item.cours_today) {
+                        form.action = "{{ url_for('menu_correction_appel') }}";                    
+                        const button = document.getElementById(`button-${item.id}`);
+                                
+                        if (button) {
+                                const lastAppelDate = item.last_appel ? new Date(item.last_appel) : null;
+                                const formattedDate = lastAppelDate ? 
+                                    `${lastAppelDate.getDate().toString().padStart(2, '0')}/${(lastAppelDate.getMonth() + 1).toString().padStart(2, '0')}/${lastAppelDate.getFullYear().toString().slice(-2)}` : 
+                                    'No data';
+                                button.textContent += ` - Correction (${formattedDate}) `;
+                                console.log(formattedDate);
+                            }
+                    }
+                    else {
+                        form.action = "{{ url_for('appel_encours') }}";
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error fetching data:', error));
+   
+</script>
 
 {% endblock %}
 
