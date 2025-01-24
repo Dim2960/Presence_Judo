@@ -9,13 +9,67 @@
 
     <h1>Listes des appels</h1>
 
+    <table>
+        <tbody id="appel-table"></tbody>
+    </table>
 
 
 </div>
 
 <script>
+    const appelTable = document.getElementById('appel-table');
+    const attendanceData = {};
 
-   
+    fetch('/api/getListAppel')
+        .then(response => response.json())
+        .then(data => {
+
+            data.forEach(appelCours => {
+                console.log(appelCours);
+                const lastAppelDate = appelCours.timestamp_appel ? new Date(appelCours.timestamp_appel) : null;
+                const formattedDate = lastAppelDate ? 
+                                        `${lastAppelDate.getDate().toString().padStart(2, '0')}/${(lastAppelDate.getMonth() + 1).toString().padStart(2, '0')}/${lastAppelDate.getFullYear().toString().slice(-2)}` : 
+                                        'No data';
+
+                // attendanceData[appelCours.id] = { nom_cours: appelCours.nom_cours, timestamp: appelCours.timestamp_appel, id_cours: appelCours.id_cours, id: appelCours.id };
+                const line = document.createElement('tr');
+                line.className = 'cours-line';
+                line.setAttribute('data-id', line.id);
+                line.innerHTML = `
+                <td >
+                    <div class="date-appel">${formattedDate}</div>
+                    <div class="nom-cours">${appelCours.nom_cours}</div>
+                </td>
+                <td>
+                    <form action="{{ url_for('correction_appel') }}" method="post">
+                        <input type="hidden" name="nom_cours" value="${appelCours.nom_cours}">
+                        <input type="hidden" name="id_cours" value="${appelCours.id_cours}">
+                        <input type="hidden" id="id_appel-${appelCours.id_cours}" name="id_appel" value="${appelCours.id_appel}">
+                        <button id="modif-btn-${ appelCours.id_cours }" class="correction-button modif-btn-correction">✏️</button>
+                    </form>
+                    </td>
+                <td>
+                    <button id="supp-btn-${ appelCours.id }" class="correction-button supp-btn-correction">🗑️</button>
+                </td>
+
+                `;
+
+                // gestion des boutons - Ajouter les listeners sur les boutons - Ajout en affichage des status sélectionnés
+                const modifBtn = line.querySelector('.modif-btn-correction');
+                modifBtn.addEventListener('click', () => modifAppel(line.id, modifBtn));
+
+                const suppBtn = line.querySelector('.supp-btn-correction');
+                suppBtn.addEventListener('click', () => SuppAppel(line.id, suppBtn));
+
+
+                appelTable.appendChild(line);
+
+            })
+            
+        })
+        .catch(error => console.error('Erreur sur l\'appel API getListAppel', error));
+
+
 </script>
 
 {% endblock %}

@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 # Charger les variables d'environnement depuis le fichier .env à supp si deploiement azure 
 # + supp commentaire ligne 38 (# f'ssl_ca={ssl_cert}')
 # + inversioin dans la main de la ligne commentée et non commentée
-# load_dotenv()
+load_dotenv()
 
 
 try:
@@ -39,7 +39,7 @@ app.config.update(
     SQLALCHEMY_DATABASE_URI=(
         # f"mysql+pymysql://root:Dimarion1708&@localhost/presenceJudo"
         f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}?'
-        f'ssl_ca={ssl_cert}' 
+        # f'ssl_ca={ssl_cert}' 
     ),
     SECRET_KEY=os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
     # DEBUG=os.environ.get("DEBUG", "False").lower() in ["true", "1"]
@@ -171,29 +171,6 @@ class Appel(db.Model):
         self.retard = retard
         self.absence_excuse = absence_excuse
         self.id_appel = id_appel
-
-# class UpdateAppel(db.Model):
-#     __tablename__ = 'updateAppel'
-
-#     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-#     id_judoka = db.Column(db.Integer, nullable=False)
-#     id_cours = db.Column(db.Integer, nullable=False)
-#     timestamp_appel = db.Column(db.DateTime, nullable=False)
-#     present = db.Column(db.Boolean, nullable=False, default=False)
-#     absent = db.Column(db.Boolean, nullable=False, default=False)
-#     retard = db.Column(db.Boolean, nullable=False, default=False)
-#     absence_excuse = db.Column(db.Boolean, nullable=False, default=False)
-#     id_appel = db.Column(db.Numeric(10, 6), nullable=False)
-
-#     def __init__(self, id_judoka, id_cours, timestamp_appel, present, absent, retard, absence_excuse, id_appel):
-#         self.id_judoka = id_judoka
-#         self.id_cours = id_cours
-#         self.timestamp_appel = timestamp_appel
-#         self.present = present
-#         self.absent = absent
-#         self.retard = retard
-#         self.absence_excuse = absence_excuse
-#         self.id_appel = id_appel
 
 
 @login_manager.user_loader
@@ -499,7 +476,32 @@ def getListAppel():
     try:
         # Charger les données 
         query_with_filter = f"""
-           
+            WITH dernier_appel AS (
+                SELECT 
+                    a.id_appel,
+                    a.timestamp_appel,
+                    c.nom_cours,
+                    c.id AS id_cours,
+                    a.id,
+                    ROW_NUMBER() OVER (PARTITION BY a.id_appel ORDER BY a.timestamp_appel DESC) AS rn
+                FROM 
+                    appel a
+                JOIN 
+                    cours c ON c.id = a.id_cours
+            )
+            SELECT 
+                timestamp_appel,
+                nom_cours,
+                id_cours,
+                id_appel,
+                id
+            FROM 
+                dernier_appel
+            WHERE 
+                rn = 1
+            ORDER BY 
+                timestamp_appel DESC
+            LIMIT 20;
         """
 
         df = pd.read_sql(query_with_filter, db.engine)
@@ -834,6 +836,6 @@ def logout():
 
 
 if __name__ == '__main__':
-    # app.run(debug=True)
-    app.run(debug=True, host='0.0.0.0', port=80)
+    app.run(debug=True)
+    # app.run(debug=True, host='0.0.0.0', port=80)
 
