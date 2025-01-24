@@ -179,7 +179,7 @@
             .then(data => {
 
                 data.forEach(person => {
-                    attendanceData[person.id] = { status: 'non_defini', timestamp: null, id_cours: "{{ session.get('id_cours') }}" };
+                    attendanceData[person.id] = { status: 'non_defini', timestamp: null, id_cours: person.id_cours };
                     const slide = document.createElement('div');
                     slide.className = 'swiper-slide';
                     slide.setAttribute('data-id', person.id);

@@ -7,15 +7,173 @@
         <img src="static/images/user-icon.png" alt="User Icon">
     </div>
 
-    <h1>Correction appel</h1>
+    <div class="table-cours-info">
+                    <h1><span id="nom-cours">Correction</span> du <span id="date"></span></h1>
+                     
+    </div>
 
+    <div>
+            <div style="text-align: right;">
+                <button class="button-submit" id="submit-attendance-update" type="submit" >Valider la modification</button>
+            </div>
 
+            <br>
+
+            <table>
+                <tbody id="appel-table"></tbody>
+            </table>
+            
+            <br>
+            
+            <div style="text-align: right;">
+                <button class="button-submit" id="submit-attendance-update" type="submit" >Valider la modification</button>
+            </div>
+    </div>
 
 </div>
 
 <script>
 
-   
+    const appelTable = document.getElementById('appel-table');
+    const attendanceDataUpdate = {};
+
+
+
+    function updateStatusCorrection(personId, status, button) {
+        const timestamp = parseFloat("{{ session.get('id_appel') }}");
+        const id_cours = parseInt("{{ session.get('id_cours') }}");
+
+        fetch('/api/updateStatusCorrection', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                id: personId, 
+                status: status,
+                timestamp: timestamp,
+                id_cours: id_cours
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur lors de la mise à jour du statut- no data');
+            }
+            return response.json();
+        })
+        .then(data => {
+            attendanceDataUpdate[personId] = { status, timestamp , id_cours };
+
+            const absentBtn = document.getElementById(`absent-btn-${personId}`);
+            absentBtn.classList.remove('success');
+
+            const presentBtn = document.getElementById(`present-btn-${personId}`);
+            presentBtn.classList.remove('success');
+
+            const retardBtn = document.getElementById(`retard-btn-${personId}`);
+            retardBtn.classList.remove('success');
+
+            const justifieBtn = document.getElementById(`absent-justifie-btn-${personId}`);
+            justifieBtn.classList.remove('success');
+            
+            button.classList.add('success');
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Une erreur s'est produite lors de la mise à jour du statut.");
+        });
+    }
+
+
+
+    fetch('/api/getAppelToCorrect')
+        .then(response => response.json())
+        .then(data => {
+
+            const date = document.getElementById(`date`);
+
+            const lastAppelDate = data[0].timestamp_appel ? new Date(data[0].timestamp_appel) : null;
+            const formattedDate = lastAppelDate ? 
+                                    `${lastAppelDate.getDate().toString().padStart(2, '0')}/${(lastAppelDate.getMonth() + 1).toString().padStart(2, '0')}/${lastAppelDate.getFullYear().toString().slice(-2)}` : 
+                                    'No data';
+            
+            date.innerHTML = formattedDate;
+
+            const nom_cours = document.getElementById(`nom-cours`);
+            nom_cours.innerHTML += " " + data[0].nom_cours;
+
+            data.forEach(person => {
+
+                attendanceDataUpdate[person.id] = { status: person.status, timestamp: person.id_appel, id_cours: person.id_cours };
+                const line = document.createElement('tr');
+                line.className = 'person-line';
+                line.setAttribute('data-id', person.id);
+                line.innerHTML = `
+                <td>
+                    <span class="prenom">${person.PRENOM}</span>
+                    <span class="nom">${person.NOM}</span>
+                </td>
+                <td>
+                    <button id="absent-btn-${ person.id }" class="correction-button absent-btn-correction">👎</button>
+                </td>
+                <td>
+                    <button id="absent-justifie-btn-${ person.id }" class="correction-button absent-justifie-btn-correction">📄</button>
+                </td>
+                <td>
+                    <button id="retard-btn-${ person.id }" class="correction-button retard-btn-correction">⌚</button>
+                </td>
+                <td>
+                    <button id="present-btn-${ person.id }" class="correction-button present-btn-correction">👍</button>
+                </td>
+                `;
+
+                // gestion des boutons - Ajouter les listeners sur les boutons - Ajout en affichage des status sélectionnés
+                const absentBtn = line.querySelector('.absent-btn-correction');
+                absentBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'absent', absentBtn));
+                if (person.absent) { absentBtn.classList.add('success'); }
+
+                const absentJustifieBtn = line.querySelector('.absent-justifie-btn-correction');
+                absentJustifieBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'absent_justifie', absentJustifieBtn));
+                if (person.absence_exc) { absentJustifieBtn.classList.add('success'); }
+
+                const retardBtn = line.querySelector('.retard-btn-correction');
+                retardBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'retard', retardBtn));
+                if (person.retard) { retardBtn.classList.add('success'); }
+
+                const presentBtn = line.querySelector('.present-btn-correction');
+                presentBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'present', presentBtn));
+                if (person.present) { presentBtn.classList.add('success'); }
+
+                appelTable.appendChild(line);
+
+            })
+            
+        })
+        .catch(error => console.error('Erreur sur l\'appel API getAppelToCorrect:', error));
+
+
+
+    // Validation de la modification
+
+    document.getElementById('submit-attendance-update').addEventListener('click', () => {
+        fetch('/api/submitAttendanceUpdate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(attendanceDataUpdate) // Envoi des données collectées
+        })
+        .then(response => {
+            console.info(attendanceDataUpdate)
+            if (!response.ok) {
+                throw new Error('Erreur lors de l\'envoi des données');
+            }
+            // alert('Données envoyées avec succès !');
+            // Redirection vers la page d'accueil
+            window.location.href = '/';
+        })
+        .catch(error => {
+            console.error(error);
+            alert('Une erreur s\'est produite lors de l\'envoi des données.');
+        });
+    });
+
 </script>
 
 {% endblock %}

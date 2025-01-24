@@ -14,6 +14,7 @@
         <form id="form-{{ cours_item.id }}" action="{{ url_for('appel_encours') }}" method="post">
             <input type="hidden" name="nom_cours" value="{{ cours_item.nom_cours }}">
             <input type="hidden" name="id_cours" value="{{ cours_item.id }}">
+            <input type="hidden" id="id_appel-{{ cours_item.id }}" name="id_appel" value="{{ cours_item.id_appel }}">
             <button type="submit" id="button-{{ cours_item.id }}">{{ cours_item.nom_cours }}</button>
         </form>
 
@@ -33,6 +34,7 @@ fetch('/api/checkAppelStatus')
                     if (item.cours_today) {
                         form.action = "{{ url_for('correction_appel') }}";                    
                         const button = document.getElementById(`button-${item.id}`);
+                        const idAppel = document.getElementById(`id_appel-${item.id}`);
                                 
                         if (button) {
                                 const lastAppelDate = item.last_appel ? new Date(item.last_appel) : null;
@@ -42,6 +44,10 @@ fetch('/api/checkAppelStatus')
                                 button.textContent += ` - Correction (${formattedDate}) `;
                                 console.log(formattedDate);
                             }
+
+                        if (idAppel) {
+                            idAppel.value = item.id_appel;
+                        }
                     }
                     else {
                         form.action = "{{ url_for('appel_encours') }}";

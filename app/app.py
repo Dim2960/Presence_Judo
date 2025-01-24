@@ -172,6 +172,28 @@ class Appel(db.Model):
         self.absence_excuse = absence_excuse
         self.id_appel = id_appel
 
+# class UpdateAppel(db.Model):
+#     __tablename__ = 'updateAppel'
+
+#     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+#     id_judoka = db.Column(db.Integer, nullable=False)
+#     id_cours = db.Column(db.Integer, nullable=False)
+#     timestamp_appel = db.Column(db.DateTime, nullable=False)
+#     present = db.Column(db.Boolean, nullable=False, default=False)
+#     absent = db.Column(db.Boolean, nullable=False, default=False)
+#     retard = db.Column(db.Boolean, nullable=False, default=False)
+#     absence_excuse = db.Column(db.Boolean, nullable=False, default=False)
+#     id_appel = db.Column(db.Numeric(10, 6), nullable=False)
+
+#     def __init__(self, id_judoka, id_cours, timestamp_appel, present, absent, retard, absence_excuse, id_appel):
+#         self.id_judoka = id_judoka
+#         self.id_cours = id_cours
+#         self.timestamp_appel = timestamp_appel
+#         self.present = present
+#         self.absent = absent
+#         self.retard = retard
+#         self.absence_excuse = absence_excuse
+#         self.id_appel = id_appel
 
 
 @login_manager.user_loader
@@ -188,8 +210,18 @@ def index():
     # Initialisation des variables de session si elles n'existent pas encore
     if 'data_cache' not in session:
         session['data_cache'] = dict()
+
     if 'id_cours' not in session:
         session['id_cours'] = 0
+
+    if 'id_appel' not in session:
+        session['id_appel'] = 0
+    
+    if 'data_cache_correction' not in session:
+        session['data_cache_correction']=dict()
+    
+    if 'timestamp_cours' not in session:
+        session['timestamp_cours']=float()
 
     return render_template('index.html')  
 
@@ -307,15 +339,20 @@ def configuration_cours() :
 def appel_menu() :
     # Récupérer les données de la table `cours`
     cours = Cours.query.order_by(Cours.nom_cours.asc()).all()
+    session['id_appel'] = 0
     
     return render_template('appel_menu.html', cours=cours)
+
 
 @app.route('/correction_appel', methods=['POST'])
 @login_required
 def correction_appel():
+    id_cours = request.form.get('id_cours')
+    id_appel = request.form.get('id_appel')
+    session['id_appel'] = id_appel
+    session['id_cours'] = id_cours
 
-
-    return render_template('correction_appel.html')
+    return render_template('correction_appel.html', id_cours=id_cours, id_appel=id_appel)
 
 
 
@@ -364,7 +401,6 @@ def get_people():
 
         if id_cours is None:
             return jsonify({"error": "id_cours est requis."}), 400
-
 
         # Charger les données depuis la base si non en cache
         query_with_filter = f"""
@@ -426,15 +462,17 @@ def checkappelDateCours():
             WITH LatestAppel AS (
                 SELECT 
                     id_cours, 
+                    id_appel,
                     MAX(timestamp_appel) AS last_appel
                 FROM 
                     appel
                 GROUP BY 
-                    id_cours
+                    id_cours, id_appel
             )
             SELECT 
                 c.id, 
-                la.last_appel
+                la.last_appel,
+                la.id_appel
             FROM 
                 cours c
             LEFT JOIN 
@@ -444,8 +482,7 @@ def checkappelDateCours():
         df = pd.read_sql(query_with_filter, db.engine)
 
         df['cours_today'] = df['last_appel'].apply(lambda x: x == datetime.now().date() if x is not None else False)
-
-        print(df)
+        df['id_appel'] = df['id_appel'].apply(lambda x: str(x) if x is not None else None)
         
         return jsonify(
                 df.to_dict(orient='records')
@@ -455,6 +492,183 @@ def checkappelDateCours():
         return jsonify({"error": f"Erreur lors de la récupération des données Checkcouple idcours et date : {str(e)}"}), 500
 
 
+@app.route('/api/getListAppel')
+@login_required
+def getListAppel():
+
+    try:
+        # Charger les données 
+        query_with_filter = f"""
+           
+        """
+
+        df = pd.read_sql(query_with_filter, db.engine)
+        print(df)
+        
+        return jsonify(
+                df.to_dict(orient='records')
+                )
+    
+    except Exception as e:
+        return jsonify({"error": f"Erreur lors de la récupération des données de liste des appels : {str(e)}"}), 500
+
+
+@app.route('/api/getAppelToCorrect')
+@login_required
+def getAppelToCorrect():
+
+    id_appel = session.get('id_appel')
+
+    try:
+        # Charger les données 
+        query_with_filter = f"""
+            SELECT
+                a.id,
+                j.id as id_judoka,
+                j.PRENOM,
+                j.NOM,
+                c.id as id_cours,
+                c.nom_cours,
+                a.timestamp_appel,
+                a.present,
+                a.absent,
+                a.retard,
+                a.absence_excuse,
+                a.id_appel
+            FROM
+                appel a 
+            JOIN
+                cours c ON c.id = a.id_cours
+            JOIN
+                judoka j ON j.id = a.id_judoka
+            WHERE
+                a.id_appel='{id_appel}'; 
+        """
+
+        df = pd.read_sql(query_with_filter, db.engine)
+        
+        def map_status(row):
+            if row['present']:
+                return 'present'
+            elif row['absent']:
+                return 'absent'
+            elif row['retard']:
+                return 'retard'
+            elif row['absence_excuse']:
+                return 'absence_excuse'
+            else:
+                return 'non_defini'
+
+        df['status'] = df.apply(map_status, axis=1)
+
+
+        session['data_cache_correction'] = df.to_dict(orient='records')  
+
+
+        return jsonify(
+                df.to_dict(orient='records')
+                )
+    
+    except Exception as e:
+        return jsonify({"error": f"Erreur lors de la récupération des données de liste des appels : {str(e)}"}), 500
+
+
+
+@app.route('/api/updateStatusCorrection', methods=['POST'])
+@login_required
+def update_status_correction():
+
+    try:
+        data = request.get_json()
+        # Récupérer depuis la session
+        id_cours = session.get('id_cours')
+        data_cache = pd.DataFrame(session.get('data_cache_correction'))
+        id_appel = session.get('id_appel')
+        
+        # print(data)
+
+        def map_status(row):
+            if row['present']:
+                return 'present'
+            elif row['absent']:
+                return 'absent'
+            elif row['retard']:
+                return 'retard'
+            elif row['absence_excuse']:
+                return 'absence_excuse'
+            else:
+                return 'non_defini'
+
+        data_cache['status'] = data_cache.apply(map_status, axis=1)
+
+        person_id = data.get('id')
+        status = data.get('status')
+
+
+        if person_id is None or status is None:
+            return jsonify({"error": "Données invalides : id et status requis."}), 400
+
+        if data_cache[data_cache['id_cours']==id_cours] is None or 'id' not in data_cache[data_cache['id_cours']==id_cours].columns:
+            return jsonify({"error": "Données introuvables ou structure invalide."}), 500
+        
+ 
+        # Trouver l'index correspondant
+        index = data_cache.index[data_cache['id'] == person_id].tolist()
+
+
+        if not index or index is None:
+            return jsonify({"error": f"ID {person_id} introuvable."}), 404
+
+        # Mettre à jour le statut
+        data_cache.loc[index[0], 'status'] = status
+        # mise à jour des pd.series --> present, absent, absece_justifie, retard
+        if status == 'present':
+            data_cache.loc[index[0], 'present'] = 1
+            data_cache.loc[index[0], 'absent'] = 0
+            data_cache.loc[index[0], 'retard'] = 0
+            data_cache.loc[index[0], 'absence_excuse'] = 0
+            
+        elif status == 'absent':
+            data_cache.loc[index[0], 'present'] = 0
+            data_cache.loc[index[0], 'absent'] = 1
+            data_cache.loc[index[0], 'retard'] = 0
+            data_cache.loc[index[0], 'absence_excuse'] = 0
+
+        elif status == 'retard':
+            data_cache.loc[index[0], 'present'] = 0
+            data_cache.loc[index[0], 'absent'] = 0
+            data_cache.loc[index[0], 'retard'] = 1
+            data_cache.loc[index[0], 'absence_excuse'] = 0
+
+        elif status == 'absent_justifie':
+            data_cache.loc[index[0], 'present'] = 0
+            data_cache.loc[index[0], 'absent'] = 0
+            data_cache.loc[index[0], 'retard'] = 0
+            data_cache.loc[index[0], 'absence_excuse'] = 1
+
+        # Calculer les compteurs de chaque statut
+        status_counts = data_cache['status'].value_counts().to_dict()
+
+        # Compléter les statuts manquants avec zéro
+        all_statuses = ['present', 'absent', 'retard', 'absent_justifie', 'non_defini']
+        status_counts = {status: status_counts.get(status, 0) for status in all_statuses}
+
+        # Comptage du nombre de personne total du groupe
+        status_counts['total'] = int(data_cache['id'].count())
+
+
+        session['data_cache_correction'] = data_cache.to_dict(orient='records') 
+
+
+        return jsonify({
+            "message": f"Statut mis à jour pour ID {person_id}.",
+            "status_counts": status_counts
+            }), 200
+
+
+    except Exception as e:
+        print("Erreur serveur :", str(e))
+        return jsonify({"error": "Erreur interne du serveur."}), 500
 
 
 @app.route('/api/updateStatus', methods=['POST'])
@@ -465,8 +679,8 @@ def update_status():
         data = request.get_json()
         # Récupérer depuis la session
         id_cours = session.get('id_cours')
-
         data_cache = pd.DataFrame(session.get('data_cache'))
+
 
 
         person_id = data.get('id')
@@ -499,10 +713,8 @@ def update_status():
 
         # Comptage du nombre de personne total du groupe
         status_counts['total'] = int(data_cache['id'].count())
-        print(status_counts)
 
         session['data_cache'] = data_cache.to_dict(orient='records') 
-
 
         return jsonify({
             "message": f"Statut mis à jour pour ID {person_id}.",
@@ -566,6 +778,52 @@ def submit_attendance():
         return jsonify({"error": str(e)}), 400
 
 
+@app.route('/api/submitAttendanceUpdate', methods=['POST'])
+def submit_attendance_update():
+    data = request.json
+
+    try:
+        if data is None:
+            return jsonify({"error": "No data provided"}), 400
+
+        for id_enregistrement, details in data.items():
+            # Extract necessary fields
+
+            status = details.get('status')
+            id_appel = details.get('timestamp')
+
+
+            # Map status to boolean columns
+            present = status == 'present'
+            absent = status == 'absent'
+            retard = status == 'retard'
+            absence_excuse = status == 'absent_justifie'
+
+            # Find existing record
+            existing_record = Appel.query.filter_by(
+                id=int(id_enregistrement),
+                id_appel=float(id_appel)
+            ).first()
+
+            print(existing_record)
+
+            if existing_record:
+                # Update existing record
+                existing_record.present = bool(present)
+                existing_record.absent = bool(absent)
+                existing_record.retard = bool(retard) 
+                existing_record.absence_excuse = bool(absence_excuse)
+            else:
+                # If record doesn't exist, return error
+                return jsonify({"error": f"Record not found for judoka {id_enregistrement}"}), 404
+
+        # Commit all updates
+        db.session.commit()
+        return jsonify({"message": "Les données ont été mises à jour avec succès"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"yo error": str(e)}), 400
 
 @app.route('/logout')
 @login_required
