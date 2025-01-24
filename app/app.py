@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 # Charger les variables d'environnement depuis le fichier .env à supp si deploiement azure 
 # + supp commentaire ligne 38 (# f'ssl_ca={ssl_cert}')
 # + inversioin dans la main de la ligne commentée et non commentée
-load_dotenv()
+# load_dotenv()
 
 
 try:
@@ -39,7 +39,7 @@ app.config.update(
     SQLALCHEMY_DATABASE_URI=(
         # f"mysql+pymysql://root:Dimarion1708&@localhost/presenceJudo"
         f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}?'
-        # f'ssl_ca={ssl_cert}' 
+        f'ssl_ca={ssl_cert}' 
     ),
     SECRET_KEY=os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
     # DEBUG=os.environ.get("DEBUG", "False").lower() in ["true", "1"]
@@ -834,6 +834,6 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
-    # app.run(debug=True, host='0.0.0.0', port=80)
+    # app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=80)
 
