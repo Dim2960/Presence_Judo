@@ -1,16 +1,18 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, session
+from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, session, g
+from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import locale
 import os
 from dotenv import load_dotenv
 
 
+
 # Charger les variables d'environnement depuis le fichier .env à supp si deploiement azure 
-# + supp commentaire ligne 38 (# f'ssl_ca={ssl_cert}')
+# + supp commentaire ligne 58 (# f'ssl_ca={ssl_cert}')
 # + inversioin dans la main de la ligne commentée et non commentée
 load_dotenv()
 
@@ -33,6 +35,20 @@ secret_key = os.getenv("FLASK_SECRET_KEY")
 
 app = Flask(__name__)
 app.secret_key = secret_key # Nécessaire pour utiliser la session
+
+# Configurations pour optimiser les sessions
+
+app.config['SESSION_TYPE'] = 'filesystem'  # Stockage des sessions sur le serveur
+app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'  # Chemin de stockage des sessions (Linux/macOS)
+app.config['SESSION_USE_SIGNER'] = True  # Sécurise les sessions avec une signature cryptographique
+app.config['SESSION_KEY_PREFIX'] = 'judoapp_'  # Préfixe pour éviter les conflits
+
+app.config['SESSION_COOKIE_SECURE'] = True  # Nécessite HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Empêche l'accès JavaScript
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Protection contre les attaques CSRF
+
+
+Session(app)  # Initialise la gestion des sessions
 
 
 app.config.update(
@@ -107,6 +123,12 @@ class Connexion_user(UserMixin, db.Model):
         self.email = email
         self.password = password
 
+    
+
+    def get_id(self):
+        return str(self.id)
+    
+
     password = db.Column(db.String(150), nullable=False)    
     
     # Relation avec User
@@ -173,32 +195,35 @@ class Appel(db.Model):
         self.id_appel = id_appel
 
 
+def execute_query(query, params=None):
+    try:
+        with db.engine.connect() as connection:
+            return pd.read_sql(query, connection, params=params)
+    except Exception as e:
+        print(f"Erreur SQL : {e}")
+        return None
+    
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    try:
+        db.session.remove()
+    except Exception as e:
+        print(f"Erreur lors de la fermeture de la session : {e}")
+
+
 @login_manager.user_loader
 def load_user(user_id):
     try:
         return db.session.get(Connexion_user, int(user_id)) 
     except Exception as e :
         print(f"Erreur lors de la connexion : {e}")
+        return None 
         
 
 @app.route('/')
 @login_required
 def index():
-    # Initialisation des variables de session si elles n'existent pas encore
-    if 'data_cache' not in session:
-        session['data_cache'] = dict()
-
-    if 'id_cours' not in session:
-        session['id_cours'] = 0
-
-    if 'id_appel' not in session:
-        session['id_appel'] = 0
-    
-    if 'data_cache_correction' not in session:
-        session['data_cache_correction']=dict()
-    
-    if 'timestamp_cours' not in session:
-        session['timestamp_cours']=float()
 
     return render_template('index.html')  
 
@@ -206,34 +231,33 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # Récupération des données du formulaire
         email = request.form.get('email')
         password = request.form.get('password')
 
-        # Vérification que les champs sont remplis
         if not email or not password:
-            flash('Veuillez renseigner tous les champs.')
+            flash('Veuillez renseigner tous les champs.', 'warning')
             return redirect(url_for('login'))
 
-        try:
-            # Recherche de l'utilisateur dans la base de données
-            user = Connexion_user.query.filter_by(email=email).first()
+        user = Connexion_user.query.filter_by(email=email).first()
 
-            # Vérification de l'utilisateur et du mot de passe
-            if user and check_password_hash(user.password, password):
-                login_user(user)
-                flash('Connexion réussie.')
-                return redirect(url_for('index'))
-            else:
-                flash('Email ou mot de passe incorrect.')
+        if user and check_password_hash(user.password, password):
+            login_user(user, remember=True)
+            session.permanent = True  # Garde la session ouverte plus longtemps
+            app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7) # Durée de la session
 
-        except Exception as e:
-            # Gestion des erreurs liées à la base de données
-            db.session.rollback()
-            flash('Une erreur est survenue. Veuillez réessayer.')
-            print(f"Erreur lors de la connexion : {e}")  # Log pour débogage
+            # initialisation des variables sessions
+            session['id_cours'] = 0
+            session['id_appel'] = 0
+            session['timestamp_cours'] = float()
+            session['data_cache'] = {}
+            session['data_cache_correction'] = {}
 
-    # Si GET ou échec de connexion
+            flash('Connexion réussie.', 'success')
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('index'))
+        
+        flash('Email ou mot de passe incorrect.', 'danger')
+    
     return render_template('login.html')
 
 
@@ -292,6 +316,7 @@ def register():
 
         except Exception as e:
             db.session.rollback()  # Annuler les changements en cas d'erreur
+            db.session.remove()
             flash('Une erreur est survenue lors de la création du compte.')
             print(f"Erreur lors de la création du compte : {e.__class__.__name__} - {e}")
 
@@ -326,6 +351,7 @@ def appel_menu() :
 def correction_appel():
     id_cours = request.form.get('id_cours')
     id_appel = request.form.get('id_appel')
+
     session['id_appel'] = id_appel
     session['id_cours'] = id_cours
 
@@ -338,6 +364,7 @@ def correction_appel():
 def appel_encours():
     nom_cours = request.form.get('nom_cours')
     id_cours = request.form.get('id_cours')
+
 
     # Stocker dans la session
     if session['id_cours'] != id_cours:
@@ -373,11 +400,16 @@ def menu_correction_appel() :
 def get_people():
     """Send list of people."""
     try:
-        # Récupérer depuis la session
+
         id_cours = session.get('id_cours')
 
         if id_cours is None:
             return jsonify({"error": "id_cours est requis."}), 400
+
+        try:
+            id_cours = int(id_cours)
+        except ValueError:
+            return jsonify({"error": "id_cours doit être un entier valide."}), 400
 
         # Charger les données depuis la base si non en cache
         query_with_filter = f"""
@@ -404,25 +436,33 @@ def get_people():
         FROM CategorieAgeJoin caj
         JOIN relation_cours_categorie_age rcca
             ON caj.id_categorie_age = rcca.id_categorie_age
-        WHERE rcca.id_cours = {id_cours};
+        WHERE rcca.id_cours = %s;
         """
 
-        filtered_df = pd.read_sql(query_with_filter, db.engine, params={"id_cours": int(id_cours)})
-        filtered_df['status'] = 'non_defini'
-        filtered_df = filtered_df.reset_index()
+
+        # df = pd.read_sql(query_with_filter, connection, params={"id_cours": int(id_cours)})
+        df = execute_query(query_with_filter, (id_cours,))
+
+        print(df)
+
+        if df is None:
+            return jsonify({"error": "Erreur lors de la récupération des données. df est None"}), 500
+        
+        df['status'] = 'non_defini'
+        df = df.reset_index()
 
         
         # retravail des infos pour affichage
-        filtered_df['SEXE'] = filtered_df['SEXE'].apply(lambda x: 'Féminin' if x == 'F' else 'Masculin')
-        filtered_df['NAISSANCE'] = pd.to_datetime(filtered_df['NAISSANCE'])
-        filtered_df['NAISSANCE'] = filtered_df['NAISSANCE'].dt.strftime('%d/%m/%Y')
-        filtered_df['LICENCE'] = filtered_df['LICENCE'].apply(lambda x: 'Oui' if x != "" else 'Non')
+        df['SEXE'] = df['SEXE'].apply(lambda x: 'Féminin' if x == 'F' else 'Masculin')
+        df['NAISSANCE'] = pd.to_datetime(df['NAISSANCE'])
+        df['NAISSANCE'] = df['NAISSANCE'].dt.strftime('%d/%m/%Y')
+        df['LICENCE'] = df['LICENCE'].apply(lambda x: 'Oui' if x != "" else 'Non')
         
 
-        session['data_cache'] = filtered_df.to_dict(orient='records')  
+        session['data_cache'] = df.to_dict(orient='records')  
 
         return jsonify(
-                filtered_df.to_dict(orient='records')
+                df.to_dict(orient='records')
                 )
     except Exception as e:
         return jsonify({"error": f"Erreur lors de la récupération des données : {str(e)}"}), 500
@@ -455,12 +495,16 @@ def checkappelDateCours():
             LEFT JOIN 
                 LatestAppel la ON c.id = la.id_cours;
         """
-
-        df = pd.read_sql(query_with_filter, db.engine)
-
-        df['cours_today'] = df['last_appel'].apply(lambda x: x == datetime.now().date() if x is not None else False)
-        df['id_appel'] = df['id_appel'].apply(lambda x: str(x) if x is not None else None)
         
+
+        df = execute_query(query_with_filter)
+
+        if df is None:
+            return jsonify({"error": "Erreur lors de la récupération des données Checkcouple idcours et date"}), 500
+        else:
+            df['cours_today'] = df['last_appel'].apply(lambda x: x == datetime.now().date() if x is not None else False)
+            df['id_appel'] = df['id_appel'].apply(lambda x: str(x) if x is not None else None)
+            
         return jsonify(
                 df.to_dict(orient='records')
                 )
@@ -504,8 +548,11 @@ def getListAppel():
             LIMIT 20;
         """
 
-        df = pd.read_sql(query_with_filter, db.engine)
-        print(df)
+        df = execute_query(query_with_filter)
+
+        if df is None:
+            return jsonify({"error": "Erreur lors de la récupération des données. df est None"}), 500
+
         
         return jsonify(
                 df.to_dict(orient='records')
@@ -515,21 +562,34 @@ def getListAppel():
         return jsonify({"error": f"Erreur lors de la récupération des données de liste des appels : {str(e)}"}), 500
 
 
+
+
 @app.route('/api/getAppelToCorrect')
 @login_required
 def getAppelToCorrect():
 
-    id_appel = session.get('id_appel')
-
     try:
+    
+        id_appel = session.get('id_appel')
+
+        if id_appel is None:
+            return jsonify({"error": "id_appel est requis."}), 400
+
+        try:
+            id_appel = float(id_appel)
+        except ValueError:
+            return jsonify({"error": "id_appel doit être un entier valide."}), 400
+        
+        
+
         # Charger les données 
-        query_with_filter = f"""
+        query_with_filter = """
             SELECT
                 a.id,
-                j.id as id_judoka,
+                j.id AS id_judoka,
                 j.PRENOM,
                 j.NOM,
-                c.id as id_cours,
+                c.id AS id_cours,
                 c.nom_cours,
                 a.timestamp_appel,
                 a.present,
@@ -537,18 +597,18 @@ def getAppelToCorrect():
                 a.retard,
                 a.absence_excuse,
                 a.id_appel
-            FROM
-                appel a 
-            JOIN
-                cours c ON c.id = a.id_cours
-            JOIN
-                judoka j ON j.id = a.id_judoka
-            WHERE
-                a.id_appel='{id_appel}'; 
+            FROM appel a 
+            JOIN cours c ON c.id = a.id_cours
+            JOIN judoka j ON j.id = a.id_judoka
+            WHERE a.id_appel = %s;
         """
 
-        df = pd.read_sql(query_with_filter, db.engine)
-        
+        df = execute_query(query_with_filter, (id_appel,))
+
+        if df is None or df.empty:
+            return jsonify({"error": "Aucune donnée trouvée pour l'id_appel fourni."}), 404
+
+        # Définition du statut en fonction des colonnes booléennes
         def map_status(row):
             if row['present']:
                 return 'present'
@@ -558,21 +618,18 @@ def getAppelToCorrect():
                 return 'retard'
             elif row['absence_excuse']:
                 return 'absence_excuse'
-            else:
-                return 'non_defini'
+            return 'non_defini'
 
         df['status'] = df.apply(map_status, axis=1)
 
+        # Mise en cache des données dans la session
+        session['data_cache_correction'] = df.to_dict(orient='records')
 
-        session['data_cache_correction'] = df.to_dict(orient='records')  
+        return jsonify(df.to_dict(orient='records'))
 
-
-        return jsonify(
-                df.to_dict(orient='records')
-                )
-    
     except Exception as e:
         return jsonify({"error": f"Erreur lors de la récupération des données de liste des appels : {str(e)}"}), 500
+
 
 
 
@@ -586,8 +643,7 @@ def update_status_correction():
         id_cours = session.get('id_cours')
         data_cache = pd.DataFrame(session.get('data_cache_correction'))
         id_appel = session.get('id_appel')
-        
-        # print(data)
+
 
         def map_status(row):
             if row['present']:
@@ -777,7 +833,11 @@ def submit_attendance():
 
     except Exception as e:
         db.session.rollback()
+        db.session.remove()
         return jsonify({"error": str(e)}), 400
+
+    finally:
+        db.session.remove()
 
 
 @app.route('/api/submitAttendanceUpdate', methods=['POST'])
@@ -825,7 +885,12 @@ def submit_attendance_update():
 
     except Exception as e:
         db.session.rollback()
+        db.session.remove()
         return jsonify({"yo error": str(e)}), 400
+
+    finally:
+        db.session.remove()
+
 
 @app.route('/logout')
 @login_required

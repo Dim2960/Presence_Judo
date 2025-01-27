@@ -9,12 +9,12 @@
 
     <div class="table-cours-info">
                     <h1><span id="nom-cours">Correction</span> du <span id="date"></span></h1>
-                     
+                
     </div>
 
     <div>
             <div style="text-align: right;">
-                <button class="button-submit" id="submit-attendance-update" type="submit" >Valider la modification</button>
+                <button class="button-submit" id="submit-attendance-update-top" type="submit" >Valider la modification</button>
             </div>
 
             <br>
@@ -26,7 +26,7 @@
             <br>
             
             <div style="text-align: right;">
-                <button class="button-submit" id="submit-attendance-update" type="submit" >Valider la modification</button>
+                <button class="button-submit" id="submit-attendance-update-bottom" type="submit" >Valider la modification</button>
             </div>
     </div>
 
@@ -132,7 +132,7 @@
 
                 const absentJustifieBtn = line.querySelector('.absent-justifie-btn-correction');
                 absentJustifieBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'absent_justifie', absentJustifieBtn));
-                if (person.absence_exc) { absentJustifieBtn.classList.add('success'); }
+                if (person.absence_excuse) { absentJustifieBtn.classList.add('success'); }
 
                 const retardBtn = line.querySelector('.retard-btn-correction');
                 retardBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'retard', retardBtn));
@@ -153,7 +153,28 @@
 
     // Validation de la modification
 
-    document.getElementById('submit-attendance-update').addEventListener('click', () => {
+    document.getElementById('submit-attendance-update-top').addEventListener('click', () => {
+        fetch('/api/submitAttendanceUpdate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(attendanceDataUpdate) // Envoi des données collectées
+        })
+        .then(response => {
+            console.info(attendanceDataUpdate)
+            if (!response.ok) {
+                throw new Error('Erreur lors de l\'envoi des données');
+            }
+            // alert('Données envoyées avec succès !');
+            // Redirection vers la page d'accueil
+            window.location.href = '/';
+        })
+        .catch(error => {
+            console.error(error);
+            alert('Une erreur s\'est produite lors de l\'envoi des données.');
+        });
+    });
+
+    document.getElementById('submit-attendance-update-bottom').addEventListener('click', () => {
         fetch('/api/submitAttendanceUpdate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
