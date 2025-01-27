@@ -154,3 +154,9 @@ form button[type="button"]{
 form button[type="button"]:hover {
   background: #5e8fc0; /* Assombri au survol */
 }
+
+form input[type="checkbox"] {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}

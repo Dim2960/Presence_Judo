@@ -29,7 +29,7 @@
                                             <input type="text" name="nom" required>
                                         </td>
                                         <td>
-                                            <input class="button-submit" type="submit" value="Ajouter">
+                                            <button type="submit">Ajouter</button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -94,11 +94,15 @@
                 console.log(categ);
 
                 const line = document.createElement('tr');
+
                 line.className = 'categ-line';
                 line.setAttribute('data-id', line.id);
                 line.innerHTML = `
                     <td>
-                        <input type="checkbox" name="categ" value="${categ.id}" checked>  <span>${categ.nom_categorie_age}</span>
+                        <input type="checkbox" name="categ" value="${categ.id}">  
+                    </td>   
+                    <td>
+                        ${categ.nom_categorie_age}
                     </td>
                 `;
 
