@@ -2,40 +2,156 @@
 {% block title %}Configurations{% endblock %}
 {% block content %}
 
-<h1>Configuration des cours</h1>
+<div class="form-container">
+    <div class="image-container">
+        <img src="static/images/user-icon.png" alt="User Icon">
+    </div>
 
-<button>+ Ajout cours</button>
+    <h1>Configuration des cours</h1>
 
-<fieldset>
-    <legend>Ajout d'un cours</legend>
+    <button class="button-submit" id="toggle-form">➕ Ajout d'un cours</button>
 
-    <table>
-        <tbody>
-            <tr>
+    <div> <br/> </div>
+
+    <fieldset id="add-course-fieldset" style="display: none;">
+        <legend>Ajout d'un cours</legend>
+
+        <table>
+            <tbody>
+                <tr>
+                    <td>
+                        <form method="POST">
+                            <label>Nom du cours :</label>
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <input type="text" name="nom" required>
+                                        </td>
+                                        <td>
+                                            <input class="button-submit" type="submit" value="Ajouter">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            <table>
+                                <tbody id="category-table"></tbody>
+                            </table>
+
+                        </form>
+                    <td>
+                    <td id="category-table">
+
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </fieldset>
+
+
+    <fieldset id="update-course-fieldset" style="display: block;">
+
+        <legend>Cours</legend>
+
+        <table>
+            <tbody id="cours-table"></tbody>
+        </table>
+
+    </fieldset>
+
+</div>
+
+<script>
+
+    const coursTable = document.getElementById('cours-table');
+    const categTable = document.getElementById('category-table');
+
+    document.getElementById('toggle-form').addEventListener('click', function() {
+        const fieldsetAdd = document.getElementById('add-course-fieldset');
+        const fieldsetUpdate = document.getElementById('update-course-fieldset');
+
+        if (fieldsetAdd.style.display === 'none') {
+            fieldsetAdd.style.display = 'block';
+            document.getElementById('toggle-form').innerText = '📄 Liste des cours';
+        } else {
+            fieldsetAdd.style.display = 'none';
+            document.getElementById('toggle-form').innerText = '➕ Ajout d\'un cours';
+        }
+
+        if (fieldsetUpdate.style.display === 'none') {
+            fieldsetUpdate.style.display = 'block';
+        } else {
+            fieldsetUpdate.style.display = 'none';
+        }
+    });
+
+
+    fetch('/api/getListCategories')
+        .then(response => response.json())
+        .then(data => {
+
+            data.forEach(categ => {
+                console.log(categ);
+
+                const line = document.createElement('tr');
+                line.className = 'categ-line';
+                line.setAttribute('data-id', line.id);
+                line.innerHTML = `
+                    <td>
+                        <input type="checkbox" name="categ" value="${categ.id}" checked>  <span>${categ.nom_categorie_age}</span>
+                    </td>
+                `;
+
+                categTable.appendChild(line);
+
+            })
+
+            })
+            .catch(error => console.error('Erreur sur l\'appel API getListCategories', error));
+    
+
+    fetch('/api/getListCours')
+        .then(response => response.json())
+        .then(data => {
+
+            data.forEach(cours => {
+                console.log(cours);
+
+                const line = document.createElement('tr');
+                line.className = 'cours-line';
+                line.setAttribute('data-id', line.id);
+                line.innerHTML = `
+                <td >
+                    <div class="nom-cours">${cours.nom_cours}</div>
+                </td>
                 <td>
-                    <form method="POST">
-                        <label>Nom du cours :</label>
-                        <input type="text" name="nom" required>
+                    <form action="{{ url_for('correction_appel') }}" method="post">
+                        <input type="hidden" name="nom_cours" value="${cours.nom_cours}">
+                        <input type="hidden" id="id_appel-${cours.id_cours}" name="id_cours" value="${cours.id_cours}">
+                        <button id="modif-btn-${ cours.id_cours }" class="correction-button modif-btn-correction">✏️</button>
                     </form>
+                    </td>
                 <td>
-            </tr>
-        </tbody>
-    </table>
+                    <button id="supp-btn-${ cours.id_cours }" class="correction-button supp-btn-correction">🗑️</button>
+                </td>
 
-</fieldset>
-<br/>
-<fieldset>
-    <legend>Cours</legend>
+                `;
 
-    <table>
-        <tbody>
-            <tr>
-                <td>Cours ...</td>
-                <td>modif</td>
-                <td>supp</td>
-            </tr>
-        </tbody>
-    </table>
-</fieldset>
+                // gestion des boutons - Ajouter les listeners sur les boutons - Ajout en affichage des status sélectionnés
+                const modifBtn = line.querySelector('.modif-btn-correction');
+                modifBtn.addEventListener('click', () => modifCours(line.id, modifBtn));
+
+                const suppBtn = line.querySelector('.supp-btn-correction');
+                suppBtn.addEventListener('click', () => SuppCours(line.id, suppBtn));
+
+
+                coursTable.appendChild(line);
+
+            })
+
+            })
+            .catch(error => console.error('Erreur sur l\'appel API getListCours', error));
+
+</script>
 
 {% endblock %}

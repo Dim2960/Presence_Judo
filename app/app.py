@@ -562,7 +562,68 @@ def getListAppel():
         return jsonify({"error": f"Erreur lors de la récupération des données de liste des appels : {str(e)}"}), 500
 
 
+@app.route('/api/getListCours')
+@login_required
+def getListCours():
 
+    try:
+        # Charger les données 
+        query_with_filter = f"""
+            SELECT 
+                c.id,
+                c.nom_cours,
+                c.categorie_age
+            FROM 
+                cours c
+            ORDER BY 
+                c.nom_cours ASC;
+        """
+
+        df = execute_query(query_with_filter)
+
+        if df is None:
+            return jsonify({"error": "Erreur lors de la récupération des données. df est None"}), 500
+
+        
+        return jsonify(
+                df.to_dict(orient='records')
+                )
+    
+    except Exception as e:
+        return jsonify({"error": f"Erreur lors de la récupération des données de liste des appels : {str(e)}"}), 500
+
+
+@app.route('/api/getListCategories')
+@login_required
+def getListCateg():
+
+    try:
+        # Charger les données 
+        query_with_filter = f"""
+            SELECT 
+                ca.id,
+                ca.nom_categorie_age,
+                ca.age_mini,
+                ca.age_maxi
+            FROM 
+                categorie_age ca
+            ORDER BY 
+                ca.nom_categorie_age ASC;
+        """
+
+        df = execute_query(query_with_filter)
+
+        if df is None:
+            return jsonify({"error": "Erreur lors de la récupération des données. df est None"}), 500
+
+        
+        return jsonify(
+                df.to_dict(orient='records')
+                )
+    
+    except Exception as e:
+        return jsonify({"error": f"Erreur lors de la récupération des données de liste des appels : {str(e)}"}), 500
+    
 
 @app.route('/api/getAppelToCorrect')
 @login_required

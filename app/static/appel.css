@@ -34,7 +34,7 @@
 }
 
 /* Style de base pour centrer le conteneur */
- .container {
+.container {
   display: flex;
   flex-direction: column;
   align-items: center;

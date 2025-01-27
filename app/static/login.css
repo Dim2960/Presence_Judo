@@ -67,7 +67,7 @@
   }
   
   /* ---------------------------
-     MISE EN FORME DES MESSAGES
+      MISE EN FORME DES MESSAGES
   --------------------------- */
   .flashes {
     list-style: none;
@@ -85,7 +85,7 @@
   }
   
   /* ---------------------------
-     FORMULAIRE
+      FORMULAIRE
   --------------------------- */
   form {
     display: flex;
