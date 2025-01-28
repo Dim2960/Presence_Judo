@@ -379,16 +379,14 @@ def correction_appel():
     return render_template('correction_appel.html', id_cours=id_cours, id_appel=id_appel)
 
 
-@app.route('/correction_cours', methods=['POST'])
+@app.route('/correction_cours', methods=['POST', 'GET'])
 @login_required
 def correction_cours():
     id_cours = request.form.get('id_cours')
-    id_appel = request.form.get('id_appel')
-
-    session['id_appel'] = id_appel
     session['id_cours'] = id_cours
+    nom_cours = request.form.get('nom_cours', '')
 
-    return render_template('correction_cours.html', id_cours=id_cours, id_appel=id_appel)
+    return render_template('correction_cours.html', id_cours=id_cours, nom_cours=nom_cours)
 
 
 @app.route('/api/addCours', methods=['GET', 'POST'])
@@ -398,9 +396,6 @@ def add_cours():
         data = request.get_json()
         nom_cours = data.get('nom')
         categorie_age = data.get('categories')
-
-        print(categorie_age)
-        print(type(categorie_age))
 
         if not nom_cours:
             return jsonify({'error': 'Le nom du cours est requis'}), 400
@@ -429,11 +424,56 @@ def add_cours():
         return jsonify({'message': 'Cours ajouté avec succès', 'nom_cours': nom_cours}), 201
 
     except Exception as e:
-        print("except")
         db.session.rollback()
         return jsonify({'error': f'Erreur lors de l\'ajout du cours : {str(e)}'}), 500
     finally:
         db.session.remove()
+
+
+@app.route('/api/updateCours/<int:id_cours>', methods=['PUT'])
+@login_required
+def update_cours(id_cours):
+    try:
+        data = request.get_json()
+        nom_cours = data.get('nom')
+        categorie_age = data.get('categories')
+        print("categ : ",categorie_age)
+
+        # Vérifier si le cours existe
+        cours = Cours.query.get(id_cours)
+        if not cours:
+            return jsonify({'error': 'Cours non trouvé'}), 404
+
+        # Validation des données
+        if not nom_cours:
+            return jsonify({'error': 'Le nom du cours est requis'}), 400
+
+        if not categorie_age or not isinstance(categorie_age, list):
+            return jsonify({'error': 'Au moins une catégorie d\'âge est requise'}), 400
+
+        # Mise à jour des informations du cours
+        cours.nom_cours = nom_cours
+        db.session.commit()
+
+        # Mise à jour des relations cours-catégorie
+        # Supprimer les relations existantes pour ce cours
+        RelationCours.query.filter_by(id_cours=id_cours).delete()
+
+        # Ajouter les nouvelles relations
+        for row_categ in categorie_age:
+            new_relation = RelationCours(id_cours=id_cours, id_categorie_age=row_categ)
+            db.session.add(new_relation)
+
+        db.session.commit()
+
+        return jsonify({'message': 'Cours mis à jour avec succès', 'nom_cours': nom_cours}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Erreur lors de la mise à jour du cours : {str(e)}'}), 500
+    finally:
+        db.session.remove()
+
 
 
 @app.route('/delete-cours/<int:cours_id>', methods=['DELETE'])
@@ -534,8 +574,6 @@ def get_people():
 
         # df = pd.read_sql(query_with_filter, connection, params={"id_cours": int(id_cours)})
         df = execute_query(query_with_filter, (id_cours,))
-
-        print(df)
 
         if df is None:
             return jsonify({"error": "Erreur lors de la récupération des données. df est None"}), 500
@@ -672,6 +710,38 @@ def getListCours():
         """
 
         df = execute_query(query_with_filter)
+
+        if df is None:
+            return jsonify({"error": "Erreur lors de la récupération des données. df est None"}), 500
+
+        
+        return jsonify(
+                df.to_dict(orient='records')
+                )
+    
+    except Exception as e:
+        return jsonify({"error": f"Erreur lors de la récupération des données de liste des appels : {str(e)}"}), 500
+
+
+@app.route('/api/getCategFromCours')
+@login_required
+def getCours():
+    try:
+        id_cours= session['id_cours']
+        print(id_cours)
+        # Charger les données 
+        query_with_filter = f"""
+            SELECT 
+                rcca.id_categorie_age
+            FROM 
+                relation_cours_categorie_age rcca 
+            WHERE
+                rcca.id_cours = %s;
+        """
+
+        df = execute_query(query_with_filter, (id_cours,))
+
+        print(df)
 
         if df is None:
             return jsonify({"error": "Erreur lors de la récupération des données. df est None"}), 500
@@ -822,7 +892,7 @@ def update_status_correction():
         if data_cache[data_cache['id_cours']==id_cours] is None or 'id' not in data_cache[data_cache['id_cours']==id_cours].columns:
             return jsonify({"error": "Données introuvables ou structure invalide."}), 500
         
- 
+
         # Trouver l'index correspondant
         index = data_cache.index[data_cache['id'] == person_id].tolist()
 
@@ -904,7 +974,7 @@ def update_status():
         if data_cache[data_cache['id_cours']==id_cours] is None or 'id' not in data_cache[data_cache['id_cours']==id_cours].columns:
             return jsonify({"error": "Données introuvables ou structure invalide."}), 500
         
- 
+
         # Trouver l'index correspondant
         index = data_cache.index[data_cache['id'] == person_id].tolist()
 
@@ -1019,8 +1089,6 @@ def submit_attendance_update():
                 id=int(id_enregistrement),
                 id_appel=float(id_appel)
             ).first()
-
-            print(existing_record)
 
             if existing_record:
                 # Update existing record

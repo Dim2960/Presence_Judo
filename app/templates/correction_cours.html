@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}Configurations{% endblock %}
+{% block content %}
+
+<div class="form-container">
+    <div class="image-container">
+        <img src="static/images/user-icon.png" alt="User Icon">
+    </div>
+
+    <h1>Modification du cours</h1>
+
+    <fieldset id="update-course-fieldset">
+        <legend> {{ request.form.get('nom_cours', '') }} </legend>
+
+        <table>
+            <tbody>
+                <tr>
+                    <td>
+                        <form id="update-course-form" method="POST">
+
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <input type="text" id="nom" name="nom" required value="{{ nom_cours }}" >
+                                            <input type="hidden" id="id_cours" name="nom" required value="{{ id_cours }}" >
+                                        </td>
+                                        <td>
+                                            <button type="submit">Valider la modification</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+
+                                <table>
+                                    <tbody id="category-table"></tbody>
+                                </table>
+                            </table>
+
+                        </form>
+                    
+                    <td id="category-table">
+
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </fieldset>
+
+
+
+</div>
+
+<script>
+    
+    const categTable = document.getElementById('category-table');
+
+
+    // Charge les catégories puis coche celles qui sont liées au cours
+    fetch('/api/getListCategories')
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(categ => {
+                const line = document.createElement('tr');
+                line.className = 'categ-line';
+                line.innerHTML = `
+                    <td>
+                        <input type="checkbox" id="categ${categ.id}" name="categ${categ.id}" value="${categ.id}">
+                    </td>
+                    <td>
+                        ${categ.nom_categorie_age}
+                    </td>
+                `;
+                document.getElementById('category-table').appendChild(line);
+            });
+
+            // Une fois les cases à cocher ajoutées, cochez celles associées au cours
+            return fetch('/api/getCategFromCours');
+        })
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(categ => {
+                const checkbox = document.getElementById('categ' + categ.id_categorie_age);
+                if (checkbox) {
+                    checkbox.checked = true;
+                } else {
+                    console.warn(`La case à cocher avec l'ID 'categ${categ.id_categorie_age}' est introuvable.`);
+                }
+            });
+        })
+        .catch(error => console.error('Erreur lors du chargement des catégories ou des données de cours :', error));
+
+
+    // Fonction pour envoyer les données de mise à jour au backend
+    function updateCours(event) {
+        event.preventDefault(); // Empêche le rechargement de la page lors de la soumission du formulaire
+
+        // Récupération des valeurs du formulaire
+        const idCours = document.getElementById('id_cours').value;
+        const nomCours = document.getElementById('nom').value;
+        const categories = Array.from(document.querySelectorAll('#category-table input[type="checkbox"]:checked'))
+            .map(c => c.value); // Récupère les ID des catégories cochées
+
+        // Validation des données
+        if (!nomCours) {
+            alert('Le nom du cours est requis.');
+            return;
+        }
+
+        if (categories.length === 0) {
+            alert('Veuillez sélectionner au moins une catégorie.');
+            return;
+        }
+
+        // Création de l'objet à envoyer
+        const data = {
+            nom: nomCours,
+            categories: categories
+        };
+
+        // Envoi de la requête PUT pour mettre à jour le cours
+        fetch(`/api/updateCours/${idCours}`, {// Remplacez <id_du_cours> par une variable dynamique si nécessaire
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) {
+                    alert(`Erreur : ${result.error}`);
+                } else {
+                    alert('Le cours a été mis à jour avec succès.');
+                    // Vous pouvez rediriger ou rafraîchir la page si nécessaire
+                    window.location.href = '/configuration_cours';
+                }
+            })
+            .catch(error => console.error('Erreur lors de la mise à jour du cours :', error));
+    }
+
+        
+
+    // Ajout du gestionnaire d'événement au formulaire
+    document.getElementById('update-course-form').addEventListener('submit', updateCours); 
+    
+</script>
+
+{% endblock %}

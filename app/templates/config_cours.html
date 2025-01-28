@@ -65,25 +65,41 @@
 
     const coursTable = document.getElementById('cours-table');
     const categTable = document.getElementById('category-table');
+    
 
-    document.getElementById('toggle-form').addEventListener('click', function() {
-        const fieldsetAdd = document.getElementById('add-course-fieldset');
-        const fieldsetUpdate = document.getElementById('update-course-fieldset');
+    fetch('/api/getListCours')
+        .then(response => response.json())
+        .then(data => {
 
-        if (fieldsetAdd.style.display === 'none') {
-            fieldsetAdd.style.display = 'block';
-            document.getElementById('toggle-form').innerText = '📄 Liste des cours';
-        } else {
-            fieldsetAdd.style.display = 'none';
-            document.getElementById('toggle-form').innerText = '➕ Ajout d\'un cours';
-        }
+            data.forEach(cours => {
 
-        if (fieldsetUpdate.style.display === 'none') {
-            fieldsetUpdate.style.display = 'block';
-        } else {
-            fieldsetUpdate.style.display = 'none';
-        }
-    });
+                const line = document.createElement('tr');
+                line.className = 'cours-line';
+                line.setAttribute('data-id', line.id);
+                line.innerHTML = `
+                <td >
+                    <div class="nom-cours">${cours.nom_cours}</div>
+                </td>
+                <td>
+                    <form action="{{ url_for('correction_cours') }}" method="post">
+                        <input type="hidden" name="nom_cours" value="${cours.nom_cours}">
+                        <input type="hidden" id="id_cours-${cours.id_cours}" name="id_cours" value="${cours.id}">
+                        <button id="modif-btn-${ cours.id }" class="correction-button modif-btn-correction">✏️</button>
+                    </form>
+                    </td>
+                <td>
+                    <button id="supp-btn-${ cours.id }" class="correction-button supp-btn-correction">🗑️</button>
+                </td>
+
+                `;
+
+                coursTable.appendChild(line);
+
+            })
+
+            })
+            .catch(error => console.error('Erreur sur l\'appel API getListCours', error));
+
 
 
     fetch('/api/getListCategories')
@@ -111,48 +127,26 @@
 
             })
             .catch(error => console.error('Erreur sur l\'appel API getListCategories', error));
-    
 
-    fetch('/api/getListCours')
-        .then(response => response.json())
-        .then(data => {
+            
+    document.getElementById('toggle-form').addEventListener('click', function() {
+        const fieldsetAdd = document.getElementById('add-course-fieldset');
+        const fieldsetUpdate = document.getElementById('update-course-fieldset');
 
-            data.forEach(cours => {
+        if (fieldsetAdd.style.display === 'none') {
+            fieldsetAdd.style.display = 'block';
+            document.getElementById('toggle-form').innerText = '📄 Liste des cours';
+        } else {
+            fieldsetAdd.style.display = 'none';
+            document.getElementById('toggle-form').innerText = '➕ Ajout d\'un cours';
+        }
 
-                const line = document.createElement('tr');
-                line.className = 'cours-line';
-                line.setAttribute('data-id', line.id);
-                line.innerHTML = `
-                <td >
-                    <div class="nom-cours">${cours.nom_cours}</div>
-                </td>
-                <td>
-                    <form action="{{ url_for('correction_cours') }}" method="post">
-                        <input type="hidden" name="nom_cours" value="${cours.nom_cours}">
-                        <input type="hidden" id="id_appel-${cours.id_cours}" name="id_cours" value="${cours.id}">
-                        <button id="modif-btn-${ cours.id }" class="correction-button modif-btn-correction">✏️</button>
-                    </form>
-                    </td>
-                <td>
-                    <button id="supp-btn-${ cours.id }" class="correction-button supp-btn-correction">🗑️</button>
-                </td>
-
-                `;
-
-                // gestion des boutons - Ajouter les listeners sur les boutons - Ajout en affichage des status sélectionnés
-                const modifBtn = line.querySelector('.modif-btn-correction');
-                modifBtn.addEventListener('click', () => modifCours(line.id, modifBtn));
-
-                const suppBtn = line.querySelector('.supp-btn-correction');
-                suppBtn.addEventListener('click', () => SuppCours(line.id, suppBtn));
-
-
-                coursTable.appendChild(line);
-
-            })
-
-            })
-            .catch(error => console.error('Erreur sur l\'appel API getListCours', error));
+        if (fieldsetUpdate.style.display === 'none') {
+            fieldsetUpdate.style.display = 'block';
+        } else {
+            fieldsetUpdate.style.display = 'none';
+        }
+    });
 
 
 
