@@ -1,110 +1,127 @@
 {% extends 'base.html' %}
 {% block title %}Mon profil{% endblock %}
 {% block content %}
-<h2>Profil de {{ current_user.prenom }}</h2>
-<fieldset>
-    <legend>Informations personnelles</legend>
 
-    <table>
-        <body>
-        <tr>
-            <td>Nom: </td>
-            <td><input type="text" value="{{ current_user.nom }}" ></td>
-        </tr>
-        <tr>
-            <td>Prénom: </td>
-            <td><input type="text" value="{{ current_user.prenom }}" ></td>
-        </tr>
-        <tr>
-            <td>Email: </td>
-            <td><input type="email" value="{{ current_user.email }}" ></td>
-        </tr>
-        <tr>
-            <td colspan = 2><button>Enregistrer les modifications</button></td>
-        </tr>
-        <tr>
-            <td colspan = 2><br/></td>
-        </tr>
-        <tr>
-            <td colspan = 2><button>Demande de réinitialisation du mot de passe</button></td>
-        </tr>
-    </body>
-</table>
+<div class="form-container">
+    <div class="image-container">
+        <img src="static/images/user-icon.png" alt="User Icon">
+    </div>
 
-</fieldset>
 
-<br/>
+    <h2>Profil de {{ current_user.prenom }}</h2>
+    <fieldset>
+        <legend>Informations personnelles</legend>
+        <form>
+            <div class="container-1">
+                <div class="container-1">
+                    <div class="container-2">
+                        Nom: 
+                    </div>
+                    <div class="container-2">
+                        <input type="text" value="{{ current_user.nom }}" >
+                    </div>
+                </div>
+                <div class="container-1">
+                    <div class="container-2">
+                        Prénom:
+                    </div>
+                    <div class="container-2"> 
+                        <input type="text" value="{{ current_user.prenom }}" >
+                    </div>
+                </div>
+                <div class="container-1">
+                    <div class="container-2">
+                        Email:  
+                    </div>
+                    <div class="container-2">
+                        <input type="email" value="{{ current_user.email }}" >
+                    </div>
+                </div>
+            </div>
 
-<fieldset>
-    <legend>Connexion France Judo</legend>
+                <div class="container-3">
+                        <button type="submit">Enregistrer les modifications</button>
+                </div>
+                
 
-    <button>Modifier</button>
-    <button>Enregistrer les modifications</button>
+            <div class="container-3">
+                <button type="submit">Demande de réinitialisation du mot de passe</button>
+            </div>  
 
-    <table>
-        <tbody>
-            <tr>
-                <td>Identifiant France Judo :</td>
-                <td><input type="text" value="{{ current_user.francejudo_id }}" disabled></td>
-            </tr>
-            <tr>
-                <td>Mot de passe France Judo:</td>
-                <td><input type="password" value="{{ current_user.francejudo_pwd }}" disabled></td>
-            </tr>
-        </tbody>
-    </table>
-     
-</fieldset>
+        </form>
+    </fieldset>
 
-<br/>
 
-<fieldset>
-    <legend>Mes cours</legend>
-    + Ajout cours
+    <fieldset>
+        <legend>Mes cours</legend>
 
-    <table>
-        <tbody>
-            <tr>
-                <td>Cours 1</td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>Cours 2</td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>Cours 3</td>
-                <td></td>
-            </tr>
-        </tbody>
-    </table>
-    
-</fieldset>
+        <form>
+            <div class="container-1">
 
-<br/>
+                <div class="container-1">
+                    <div class="container-1">
+                        <input type="checkbox" id="cours1" name="cours1" value="cours1">
+                        <label for="cours1">Cours de Judo</label>
+                    </div>
+                    <div class="container-1">
+                        <input type="checkbox" id="cours1" name="cours1" value="cours1">
+                        <label for="cours1">Cours de Judo</label>
+                    </div>
+                    <div class="container-1">
+                        <input type="checkbox" id="cours1" name="cours1" value="cours1">
+                        <label for="cours1">Cours de Judo</label>
+                    </div>
+                    <div class="container-1">
+                        <input type="checkbox" id="cours1" name="cours1" value="cours1">
+                        <label for="cours1">Cours de Judo</label>
+                    </div>
+                </div>
+                
+            </div>
 
-<fieldset>
-    <legend>Supprimer mon compte</legend>
-    <p>Attention, cette action est irréversible. Vous perdrez 
-        l'accès à votre compte et à toutes les informations vous 
-        concernant.</p>
+                <div class="container-3">
+                    <button type="submit">Enregistrer les modifications</button>
+                </div>
+                
+        </form>
+        
+    </fieldset>
 
-    <table>
-        <tbody>
-            <tr>
-                <td>
-                    Saisir : supp_{{ current_user.prenom}}
-                </td>
-            </tr>
-            <tr>
-                <td><input type="text"></td>
-                <td><button>Supprimer mon compte</button></td>
-            </tr>
-        </tbody>
-    </table>
-    
 
-</fieldset>
 
+    <fieldset>
+        <legend>Connexion France Judo</legend>
+        <form>
+            <div class="container-1">
+                <label for="francejudo_id">Identifiant France Judo</label>
+                <input id="francejudo_id" type="text" value="{{ current_user.francejudo_id }}" disabled>
+
+                <label for="francejudo_pwd">Mot de passe France Judo</label>
+                <input id="francejudo_pwd" type="password" value="{{ current_user.francejudo_pwd }}" disabled>
+
+                <button type="submit">Enregistrer les modifications</button>
+            </div>
+        </form>
+    </fieldset>
+
+
+    <fieldset>
+        <legend>Supprimer mon compte</legend>
+
+        <form>
+            <p>Attention, cette action est irréversible. Vous perdrez 
+                l'accès à votre compte et à toutes les informations vous 
+                concernant.</p>
+
+                <div class="container-1">
+                    <label for="delete-input">Saisir : supp_{{ current_user.prenom }}</label>
+                    <input id="delete-input" type="text">
+                    <button type="submit">Supprimer mon compte</button>
+                </div>
+
+        </form>
+    </fieldset>
+
+</div>
 
 {% endblock %}

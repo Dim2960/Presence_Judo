@@ -9,13 +9,15 @@
    }
 
 
-   /* ---------------------------
+/* ---------------------------
    BODY
-  --------------------------- */
+--------------------------- */
+
 body {
    font-family: Arial, sans-serif;
    /* Fond en dégradé de bleu / gris */
    background: linear-gradient(135deg, #6ea0d4 0vw, #dce6ef 100vw);
+   background-attachment: fixed;
    height: 100vh;
    /* width: 100vw; */
    /* max-width: 500px; */
@@ -28,10 +30,14 @@ body {
    color: #333;
     /* overflow: clip; */
    }
+
+p {
+   margin-bottom: 1rem;
+   }
    
-   /* ---------------------------
+/* ---------------------------
    TITRE
-  --------------------------- */
+--------------------------- */
 h1 {
    text-align: center;
    margin-bottom: 1.5rem;
@@ -39,9 +45,9 @@ h1 {
    font-weight: 400;
    }
 
-   /* ---------------------------
+/* ---------------------------
    TABLEAU
-   --------------------------- */
+--------------------------- */
 
 /* table {
    margin: 0;
@@ -58,3 +64,51 @@ table tr {
 table td {
    margin: 0;
 } */
+
+
+/* ---------------------------
+   FIELDSET
+--------------------------- */
+
+fieldset {
+   border: 1px solid #ccc;
+   border-radius: 5px;
+   padding: 1rem;
+   margin-bottom: 1rem;
+   margin-top: 1rem;
+   }
+
+/* ---------------------------
+   FORMULAIRE
+--------------------------- */
+
+
+
+/* ---------------------------
+   CONTENEUR
+--------------------------- */
+
+/* Conteneur principal */
+.container-1 {
+   display: flex;
+   flex-wrap: wrap; /* Permet de retourner à la ligne si nécessaire */
+   justify-content: left; /* Centre les éléments horizontalement */
+   align-items: center; /* Centre les éléments verticalement */
+   gap: 15px; /* Espacement entre les éléments */
+
+}
+
+.container-2 {
+   display: flex;
+   flex-wrap: wrap; /* Permet de retourner à la ligne si nécessaire */
+   min-width: 65px; /* Taille fixe pour la largeur */
+}
+
+.container-3 {
+   display: flex;
+   flex-wrap: wrap; /* Permet de retourner à la ligne si nécessaire */
+   justify-content: center; /* Centre les éléments horizontalement */
+   align-items: center; /* Centre les éléments verticalement */
+   gap: 15px; /* Espacement entre les éléments */
+
+}
