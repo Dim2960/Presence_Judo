@@ -118,7 +118,6 @@
         .then(data => {
 
             data.forEach(cours => {
-                console.log(cours);
 
                 const line = document.createElement('tr');
                 line.className = 'cours-line';
@@ -130,12 +129,12 @@
                 <td>
                     <form action="{{ url_for('correction_cours') }}" method="post">
                         <input type="hidden" name="nom_cours" value="${cours.nom_cours}">
-                        <input type="hidden" id="id_appel-${cours.id_cours}" name="id_cours" value="${cours.id_cours}">
-                        <button id="modif-btn-${ cours.id_cours }" class="correction-button modif-btn-correction">✏️</button>
+                        <input type="hidden" id="id_appel-${cours.id_cours}" name="id_cours" value="${cours.id}">
+                        <button id="modif-btn-${ cours.id }" class="correction-button modif-btn-correction">✏️</button>
                     </form>
                     </td>
                 <td>
-                    <button id="supp-btn-${ cours.id_cours }" class="correction-button supp-btn-correction">🗑️</button>
+                    <button id="supp-btn-${ cours.id }" class="correction-button supp-btn-correction">🗑️</button>
                 </td>
 
                 `;
@@ -160,7 +159,14 @@
     document.getElementById('add-course-form').addEventListener('submit', function(event) {
         event.preventDefault(); // Empêche le rechargement de la page
 
-        const nomCours = document.getElementById('nom').value;
+        const nomCours = document.getElementById('nom').value;    
+        const categories = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value);
+
+        // Vérification : au moins une catégorie doit être cochée
+        if (categories.length === 0) {
+            alert("Veuillez sélectionner au moins une catégorie d'age.");
+            return; 
+            }
 
         fetch('/api/addCours', {
             method: 'POST',
@@ -174,7 +180,6 @@
             if (data.error) {
                 alert("Erreur: " + data.error);
             } else {
-                alert("Cours ajouté: " + data.nom_cours);
                 location.reload(); // Recharger la page pour voir la mise à jour
             }
         })
@@ -186,15 +191,16 @@
         if (event.target.classList.contains("supp-btn-correction")) {
         const coursId = event.target.id.split("-")[2]; // Récupère l'ID depuis l'attribut `id`
 
+            
         if (confirm("Êtes-vous sûr de vouloir supprimer ce cours ?")) {
             fetch(`/delete-cours/${coursId}`, {
             method: "DELETE",
             })
             .then((response) => {
                 if (response.ok) {
-                alert("Cours supprimé avec succès !");
+                // alert("Cours supprimé avec succès !");
                 // Supprime visuellement l'élément (optionnel)
-                event.target.closest(".course-item").remove();
+                event.target.closest(".cours-line").remove();
                 } else {
                 alert("Une erreur s'est produite lors de la suppression.");
                 }
