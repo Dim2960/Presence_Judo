@@ -53,9 +53,6 @@
 
 <script>
     
-    const categTable = document.getElementById('category-table');
-
-
     // Charge les catégories puis coche celles qui sont liées au cours
     fetch('/api/getListCategories')
         .then(response => response.json())

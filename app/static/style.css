@@ -112,3 +112,12 @@ fieldset {
    gap: 15px; /* Espacement entre les éléments */
 
 }
+
+.container-4 {
+   display: flex;
+   flex-wrap: wrap; /* Permet de retourner à la ligne si nécessaire */
+   min-width: 160px; /* Taille fixe pour la largeur */
+   justify-content: left; /* Centre les éléments horizontalement */
+   align-items: center; /* Centre les éléments verticalement */
+   gap: 15px; /* Espacement entre les éléments */
+}

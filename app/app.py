@@ -188,6 +188,16 @@ class RelationCours(db.Model):
         self.id_categorie_age = id_categorie_age
 
 
+class RelationUserCours(db.Model):
+    __tablename__ = 'relation_user_cours'
+    id = db.Column(db.Integer, primary_key=True)
+    id_user = db.Column(db.Integer, nullable=False)
+    id_cours = db.Column(db.Integer, nullable=False)
+
+    def __init__(self, id_user, id_cours):
+        self.id_user = id_user
+        self.id_cours = id_cours
+
 
 
 class Appel(db.Model):
@@ -475,6 +485,46 @@ def update_cours(id_cours):
         db.session.remove()
 
 
+@app.route('/api/updateCoursUser/<int:id_user>', methods=['PUT'])
+@login_required
+def update_coursUser(id_user):
+    try:
+        data = request.get_json()
+        cours = data.get('coursUser')
+        print("data : ", data)
+
+        # Vérifier si le cours existe
+        user_record = User.query.get(id_user)
+        if not user_record:
+            return jsonify({'error': 'id_user non trouvé'}), 404
+
+        # Validation des données
+        if not cours or not isinstance(cours, list):
+            return jsonify({'error': 'Au moins un cours est requis'}), 400
+
+        print('ixi')
+        # Mise à jour des relations cours-catégorie
+        # Supprimer les relations existantes pour ce cours
+        RelationUserCours.query.filter_by(id_user=id_user).delete()
+
+        print('la')
+        # Ajouter les nouvelles relations
+        for row_cours in cours:
+            print("row_cours : ", row_cours)
+            new_relation = RelationUserCours(id_user=id_user, id_cours=row_cours)
+            db.session.add(new_relation)
+
+        db.session.commit()
+
+        return jsonify({'message': 'Cours mis à jour avec succès', 'id_user': id_user}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Erreur lors de la mise à jour du cours : {str(e)}'}), 500
+    finally:
+        db.session.remove()
+
+
 
 @app.route('/delete-cours/<int:cours_id>', methods=['DELETE'])
 def delete_cours(cours_id):
@@ -728,7 +778,7 @@ def getListCours():
 def getCours():
     try:
         id_cours= session['id_cours']
-        print(id_cours)
+
         # Charger les données 
         query_with_filter = f"""
             SELECT 
@@ -740,6 +790,37 @@ def getCours():
         """
 
         df = execute_query(query_with_filter, (id_cours,))
+
+        if df is None:
+            return jsonify({"error": "Erreur lors de la récupération des données. df est None"}), 500
+        
+        return jsonify(
+                df.to_dict(orient='records')
+                )
+    
+    except Exception as e:
+        return jsonify({"error": f"Erreur lors de la récupération des données de liste des appels : {str(e)}"}), 500
+
+
+@app.route('/api/getCoursFromUser')
+@login_required
+def getCoursUser():
+    try:
+        id_user= current_user.id
+
+        print(id_user)
+        # Charger les données 
+        query_with_filter = f"""
+            SELECT 
+                ruc.id_user,
+                id_cours
+            FROM 
+                relation_user_cours ruc 
+            WHERE
+                ruc.id_user = %s;
+        """
+
+        df = execute_query(query_with_filter, (id_user,))
 
         print(df)
 
@@ -753,7 +834,7 @@ def getCours():
     
     except Exception as e:
         return jsonify({"error": f"Erreur lors de la récupération des données de liste des appels : {str(e)}"}), 500
-
+    
 
 @app.route('/api/getListCategories')
 @login_required

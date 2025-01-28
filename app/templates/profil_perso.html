@@ -55,34 +55,20 @@
     <fieldset>
         <legend>Mes cours</legend>
 
-        <form>
+        <form id="update-user-cours-form" method="POST">
             <div class="container-1">
 
-                <div class="container-1">
-                    <div class="container-1">
-                        <input type="checkbox" id="cours1" name="cours1" value="cours1">
-                        <label for="cours1">Cours de Judo</label>
-                    </div>
-                    <div class="container-1">
-                        <input type="checkbox" id="cours1" name="cours1" value="cours1">
-                        <label for="cours1">Cours de Judo</label>
-                    </div>
-                    <div class="container-1">
-                        <input type="checkbox" id="cours1" name="cours1" value="cours1">
-                        <label for="cours1">Cours de Judo</label>
-                    </div>
-                    <div class="container-1">
-                        <input type="checkbox" id="cours1" name="cours1" value="cours1">
-                        <label for="cours1">Cours de Judo</label>
-                    </div>
+                <div id="category-div" class="container-1">
+
                 </div>
                 
             </div>
 
                 <div class="container-3">
+                    <input type="hidden" id="id_user" value="{{ current_user.id }}">
                     <button type="submit">Enregistrer les modifications</button>
                 </div>
-                
+
         </form>
         
     </fieldset>
@@ -124,4 +110,86 @@
 
 </div>
 
+<script>
+
+    // Charge les catégories puis coche celles qui sont liées au cours
+    fetch('/api/getListCours')
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(cours => {
+                const line = document.createElement('div');
+                line.className = 'cours-line';
+                line.innerHTML = `
+                    <div class="container-4">
+                        <input type="checkbox" id="cours${cours.id}" name="cours${cours.id}" value="${cours.id}">
+                        <label for="cours${cours.id}">${cours.nom_cours}</label>
+                    </div>
+                `;
+                document.getElementById('category-div').appendChild(line);
+            });
+
+            // Une fois les cases à cocher ajoutées, cochez celles associées au cours
+            return fetch('/api/getCoursFromUser');
+        })
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(cours => {
+                const checkbox = document.getElementById('cours' + cours.id_cours);
+
+                if (checkbox) {
+                    checkbox.checked = true;
+                } else {
+                    console.warn(`La case à cocher avec l'ID 'cours${cours.id_cours}' est introuvable.`);
+                }
+            });
+        })
+        .catch(error => console.error('Erreur lors du chargement des catégories ou des données de cours :', error));
+
+
+
+    // Fonction pour envoyer les données de mise à jour au backend
+    function updateCoursUser(event) {
+        event.preventDefault(); // Empêche le rechargement de la page lors de la soumission du formulaire
+
+        // Récupération des valeurs du formulaire
+        const idUser = document.getElementById('id_user').value;
+        const coursUser = Array.from(document.querySelectorAll('#category-div input[type="checkbox"]:checked'))
+            .map(c => c.value); // Récupère les ID des cours cochées
+
+
+        if (coursUser.length === 0) {
+            alert('Veuillez sélectionner au moins un cours.');
+            return;
+        }
+
+        // Création de l'objet à envoyer
+        const data = {
+            id_user: idUser,
+            coursUser: coursUser
+        };
+
+        // Envoi de la requête PUT pour mettre à jour le cours
+        fetch(`/api/updateCoursUser/${idUser}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) {
+                    alert(`Erreur : ${result.error}`);
+                } else {
+                    window.location.href = '/mon_profil';
+                }
+            })
+            .catch(error => console.error('Erreur lors de la mise à jour du profil/Mes cours :', error));
+    }
+
+
+    // Ajout du gestionnaire d'événement au formulaire
+    document.getElementById('update-user-cours-form').addEventListener('submit', updateCoursUser); 
+
+</script>
 {% endblock %}
