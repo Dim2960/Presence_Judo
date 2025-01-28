@@ -20,13 +20,13 @@
             <tbody>
                 <tr>
                     <td>
-                        <form method="POST">
+                        <form id="add-course-form" method="POST">
                             <label>Nom du cours :</label>
                             <table>
                                 <tbody>
                                     <tr>
                                         <td>
-                                            <input type="text" name="nom" required>
+                                            <input type="text" id="nom" name="nom" required>
                                         </td>
                                         <td>
                                             <button type="submit">Ajouter</button>
@@ -91,7 +91,6 @@
         .then(data => {
 
             data.forEach(categ => {
-                console.log(categ);
 
                 const line = document.createElement('tr');
 
@@ -99,7 +98,7 @@
                 line.setAttribute('data-id', line.id);
                 line.innerHTML = `
                     <td>
-                        <input type="checkbox" name="categ" value="${categ.id}">  
+                        <input type="checkbox" name="categ${categ.id}" value="${categ.id}">  
                     </td>   
                     <td>
                         ${categ.nom_categorie_age}
@@ -129,7 +128,7 @@
                     <div class="nom-cours">${cours.nom_cours}</div>
                 </td>
                 <td>
-                    <form action="{{ url_for('correction_appel') }}" method="post">
+                    <form action="{{ url_for('correction_cours') }}" method="post">
                         <input type="hidden" name="nom_cours" value="${cours.nom_cours}">
                         <input type="hidden" id="id_appel-${cours.id_cours}" name="id_cours" value="${cours.id_cours}">
                         <button id="modif-btn-${ cours.id_cours }" class="correction-button modif-btn-correction">✏️</button>
@@ -155,6 +154,56 @@
 
             })
             .catch(error => console.error('Erreur sur l\'appel API getListCours', error));
+
+
+
+    document.getElementById('add-course-form').addEventListener('submit', function(event) {
+        event.preventDefault(); // Empêche le rechargement de la page
+
+        const nomCours = document.getElementById('nom').value;
+
+        fetch('/api/addCours', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ nom: nomCours, categories: Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(c => c.value) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert("Erreur: " + data.error);
+            } else {
+                alert("Cours ajouté: " + data.nom_cours);
+                location.reload(); // Recharger la page pour voir la mise à jour
+            }
+        })
+        .catch(error => console.error('Erreur lors de l\'ajout du cours:', error));
+    });
+
+
+    document.addEventListener("click", function (event) {
+        if (event.target.classList.contains("supp-btn-correction")) {
+        const coursId = event.target.id.split("-")[2]; // Récupère l'ID depuis l'attribut `id`
+
+        if (confirm("Êtes-vous sûr de vouloir supprimer ce cours ?")) {
+            fetch(`/delete-cours/${coursId}`, {
+            method: "DELETE",
+            })
+            .then((response) => {
+                if (response.ok) {
+                alert("Cours supprimé avec succès !");
+                // Supprime visuellement l'élément (optionnel)
+                event.target.closest(".course-item").remove();
+                } else {
+                alert("Une erreur s'est produite lors de la suppression.");
+                }
+            })
+            .catch((error) => console.error("Erreur :", error));
+        }
+        }
+    });
+
 
 </script>
 

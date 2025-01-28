@@ -169,6 +169,25 @@ class Cours(db.Model):
     __tablename__ = 'cours'
     id = db.Column(db.Integer, primary_key=True)
     nom_cours = db.Column(db.String(255), nullable=False)
+    categorie_age = db.Column(db.String(255), nullable=False)
+    ordre_cours = db.Column(db.Integer, nullable=False)
+
+    def __init__(self, nom_cours, categorie_age):
+        self.nom_cours = nom_cours
+        self.categorie_age = categorie_age
+
+
+class RelationCours(db.Model):
+    __tablename__ = 'relation_cours_categorie_age'
+    id = db.Column(db.Integer, primary_key=True)
+    id_cours = db.Column(db.Integer, nullable=False)
+    id_categorie_age = db.Column(db.Integer, nullable=False)
+
+    def __init__(self, id_cours, id_categorie_age):
+        self.id_cours = id_cours
+        self.id_categorie_age = id_categorie_age
+
+
 
 
 class Appel(db.Model):
@@ -330,7 +349,7 @@ def mon_profil() :
     return render_template('profil_perso.html')
 
 
-@app.route('/configuration_cours')
+@app.route('/configuration_cours', methods=['GET', 'POST'])
 @login_required
 def configuration_cours() :
     return render_template('config_cours.html')
@@ -339,11 +358,13 @@ def configuration_cours() :
 @app.route('/appel_menu')
 @login_required
 def appel_menu() :
-    # Récupérer les données de la table `cours`
-    cours = Cours.query.order_by(Cours.nom_cours.asc()).all()
-    session['id_appel'] = 0
     
-    return render_template('appel_menu.html', cours=cours)
+    # Récupérer les données de la table `cours`
+    cours_list = db.session.query(Cours).order_by(Cours.ordre_cours.asc()).all()
+    session['id_appel'] = 0
+
+
+    return render_template('appel_menu.html', cours=cours_list)
 
 
 @app.route('/correction_appel', methods=['POST'])
@@ -357,6 +378,77 @@ def correction_appel():
 
     return render_template('correction_appel.html', id_cours=id_cours, id_appel=id_appel)
 
+
+@app.route('/correction_cours', methods=['POST'])
+@login_required
+def correction_cours():
+    id_cours = request.form.get('id_cours')
+    id_appel = request.form.get('id_appel')
+
+    session['id_appel'] = id_appel
+    session['id_cours'] = id_cours
+
+    return render_template('correction_cours.html', id_cours=id_cours, id_appel=id_appel)
+
+
+@app.route('/api/addCours', methods=['GET', 'POST'])
+@login_required
+def add_cours():
+    try:
+        data = request.get_json()
+        nom_cours = data.get('nom')
+        categorie_age = data.get('categories')
+
+        print(categorie_age)
+        print(type(categorie_age))
+
+        if not nom_cours:
+            return jsonify({'error': 'Le nom du cours est requis'}), 400
+        
+        if categorie_age is None:
+            return jsonify({'error': 'La catégorie d\'âge est requise'}), 400
+
+
+        # Vérification de l'existence du cours
+        existing_cours = Cours.query.filter_by(nom_cours=nom_cours).first()
+        if existing_cours:
+            return jsonify({'error': 'Ce cours existe déjà'}), 409
+
+        # Ajouter le cours à la base de données cours
+        new_cours = Cours(nom_cours=nom_cours, categorie_age=categorie_age[0])
+        db.session.add(new_cours)
+        db.session.commit()
+
+        # Ajouter à la base de données relation_cours_categorie_age
+        for row_categ in categorie_age:
+            new_relation = RelationCours(id_cours=new_cours.id, id_categorie_age=row_categ)
+            db.session.add(new_relation)
+            db.session.commit()
+
+
+        return jsonify({'message': 'Cours ajouté avec succès', 'nom_cours': nom_cours}), 201
+
+    except Exception as e:
+        print("except")
+        db.session.rollback()
+        return jsonify({'error': f'Erreur lors de l\'ajout du cours : {str(e)}'}), 500
+    finally:
+        db.session.remove()
+
+
+@app.route('/delete-cours/<int:cours_id>', methods=['DELETE'])
+def delete_cours(cours_id):
+    try:
+        cours = Cours.query.get(cours_id)
+        if not cours:
+            return jsonify({"message": "Cours non trouvé."}), 404
+
+        db.session.delete(cours)
+        db.session.commit()
+        return jsonify({"message": "Cours supprimé avec succès."}), 200
+
+    except Exception as e:
+        return jsonify({"message": "Erreur serveur.", "error": str(e)}), 500
 
 
 @app.route('/appel_encours', methods=['POST'])
