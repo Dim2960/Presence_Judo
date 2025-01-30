@@ -172,7 +172,7 @@ class Cours(db.Model):
     categorie_age = db.Column(db.String(255), nullable=False)
     ordre_cours = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, nom_cours, categorie_age):
+    def __init__(self, nom_cours: str, categorie_age):
         self.nom_cours = nom_cours
         self.categorie_age = categorie_age
 
@@ -194,9 +194,9 @@ class RelationUserCours(db.Model):
     id_user = db.Column(db.Integer, nullable=False)
     id_cours = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, id_user, id_cours):
-        self.id_user = id_user
-        self.id_cours = id_cours
+    def __init__(self, user_id: int, cours_id: int):
+        self.id_user: int = user_id
+        self.id_cours = cours_id
 
 
 
@@ -369,9 +369,21 @@ def configuration_cours() :
 @login_required
 def appel_menu() :
     
-    # Récupérer les données de la table `cours`
-    cours_list = db.session.query(Cours).order_by(Cours.ordre_cours.asc()).all()
     session['id_appel'] = 0
+
+    current_user_id = current_user.id
+
+    if not current_user_id:
+        return "Utilisateur non connecté", 403  # Bloquer l'accès si pas connecté
+    
+
+    cours_list = (
+        db.session.query(Cours)
+        .join(RelationUserCours, Cours.id == RelationUserCours.id_cours)
+        .filter(RelationUserCours.id_user == current_user_id)
+        .order_by(Cours.nom_cours)
+        .all()
+    )
 
 
     return render_template('appel_menu.html', cours=cours_list)
@@ -447,7 +459,6 @@ def update_cours(id_cours):
         data = request.get_json()
         nom_cours = data.get('nom')
         categorie_age = data.get('categories')
-        print("categ : ",categorie_age)
 
         # Vérifier si le cours existe
         cours = Cours.query.get(id_cours)
@@ -511,7 +522,7 @@ def update_coursUser(id_user):
         # Ajouter les nouvelles relations
         for row_cours in cours:
             print("row_cours : ", row_cours)
-            new_relation = RelationUserCours(id_user=id_user, id_cours=row_cours)
+            new_relation = RelationUserCours(user_id=id_user, cours_id=row_cours)
             db.session.add(new_relation)
 
         db.session.commit()
@@ -658,13 +669,13 @@ def checkappelDateCours():
         query_with_filter = f"""
             WITH LatestAppel AS (
                 SELECT 
-                    id_cours, 
-                    id_appel,
-                    MAX(timestamp_appel) AS last_appel
+                    a.id_cours, 
+                    a.id_appel,
+                    MAX(a.timestamp_appel) AS last_appel
                 FROM 
-                    appel
+                    appel a
                 GROUP BY 
-                    id_cours, id_appel
+                    a.id_cours, a.id_appel
             )
             SELECT 
                 c.id, 
@@ -676,8 +687,8 @@ def checkappelDateCours():
                 LatestAppel la ON c.id = la.id_cours;
         """
         
-
         df = execute_query(query_with_filter)
+
 
         if df is None:
             return jsonify({"error": "Erreur lors de la récupération des données Checkcouple idcours et date"}), 500
