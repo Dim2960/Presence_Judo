@@ -1,7 +1,21 @@
 {% extends 'base.html' %}
 {% block title %}Statistiques{% endblock %}
 {% block content %}
-<h1>Statistiques</h1>
+
+
+<div class="form-container">
+    <div class="image-container">
+        <img src="static/images/user-icon.png" alt="User Icon">
+    </div>
+
+    <h1>Statistiques</h1>
+
+
+    <img style = "max-width:80vw; width: 600px;" src="{{ pieChart }}" alt="Graphique Matplotlib" />
+    
+</div>
+
+
 
 <a href="{{ url_for('Statistique_groupe') }}"><button>statistique groupe Perfectionnement</button></a>
 

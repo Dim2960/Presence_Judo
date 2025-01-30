@@ -9,6 +9,11 @@ import locale
 import os
 from dotenv import load_dotenv
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+import io
+import base64
+
 
 
 # Charger les variables d'environnement depuis le fichier .env à supp si deploiement azure 
@@ -253,8 +258,7 @@ def load_user(user_id):
 @app.route('/')
 @login_required
 def index():
-
-    return render_template('index.html')  
+    return render_template('index.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -502,7 +506,6 @@ def update_coursUser(id_user):
     try:
         data = request.get_json()
         cours = data.get('coursUser')
-        print("data : ", data)
 
         # Vérifier si le cours existe
         user_record = User.query.get(id_user)
@@ -513,12 +516,10 @@ def update_coursUser(id_user):
         if not cours or not isinstance(cours, list):
             return jsonify({'error': 'Au moins un cours est requis'}), 400
 
-        print('ixi')
         # Mise à jour des relations cours-catégorie
         # Supprimer les relations existantes pour ce cours
         RelationUserCours.query.filter_by(id_user=id_user).delete()
 
-        print('la')
         # Ajouter les nouvelles relations
         for row_cours in cours:
             print("row_cours : ", row_cours)
@@ -570,10 +571,110 @@ def appel_encours():
     return render_template('appel_encours.html', nom_cours=nom_cours, id_cours=id_cours, today=today)
 
 
+def extractAppel():
+    try:
+        # Charger les données 
+        query = f"""
+            SELECT 
+                *   
+            FROM 
+                appel a ;
+        """
+        
+        df = execute_query(query)
+
+        if df is None:
+            return jsonify({"error": "Erreur lors de la récupération des données Checkcouple idcours et date"}), 500
+            
+        return df
+    
+    except Exception as e:
+        return jsonify({"error": f"Erreur lors de la récupération des données Checkcouple idcours et date : {str(e)}"}), 500
+
+
+def repart_presence_general(df) :
+        
+    if isinstance(df, pd.DataFrame):
+        presence_counts = df['present'].value_counts(normalize=False).get(1, 0)
+        absence_counts = df['absent'].value_counts(normalize=False).get(1, 0)
+        retard_counts = df['retard'].value_counts(normalize=False).get(1, 0)
+        absence_excuse_counts = df['absence_excuse'].value_counts(normalize=False).get(1, 0)
+
+        df = pd.DataFrame({
+            'Category': ['Présent', 'Absent', 'Excusé', 'Retard'],
+            'Value': [presence_counts, absence_counts, retard_counts, absence_excuse_counts]
+        })
+
+    else:
+        return jsonify({"error": "Erreur lors de la récupération des données. df est None"}), 500
+    
+    return df
+
+
+def graphToImg(fig):
+    # Sauvegarde du graphique dans un buffer mémoire
+    pngImage = io.BytesIO()
+    fig.savefig(pngImage, format='png')
+    pngImage.seek(0)  # Repositionnement au début du buffer
+
+    # Encodage en base64
+    pngImageB64String = "data:image/png;base64,"
+    pngImageB64String += base64.b64encode(pngImage.read()).decode('utf8')
+
+    return pngImageB64String
+
+
+def piechart(df: pd.DataFrame, titre:str): 
+
+    colors = sns.color_palette('pastel')[0:len(df)]
+
+    # Création de la figure
+    fig, ax = plt.subplots()
+    ax.pie(
+        df['Value'],
+        labels=df['Category'].tolist(),
+        colors=colors,
+        autopct='%.0f%%'
+    )
+    ax.set_title(titre)
+
+    return fig
+
+
+def piechart_repart_presence():
+    '''
+    Extraction des données
+    '''
+    # Données
+    titre = "Répartition des présences"
+    df_appel = extractAppel()
+    
+    if isinstance(df_appel, pd.DataFrame):
+        df_repart_general = repart_presence_general(df_appel)
+        
+        if isinstance(df_repart_general, pd.DataFrame):
+            # Parametrage et Génération du graphique
+            fig_piechart = piechart(df_repart_general, titre)
+        else:
+            return jsonify({"error": "Erreur lors du traitement des données"}), 500
+    else:
+        return jsonify({"error": "Erreur lors de l'extraction des données"}), 500
+
+    # Convertir graph en image
+    return graphToImg(fig_piechart)
+
+
 @app.route('/Statistique_generale')
 @login_required
 def Statistique_generale() :
-    return render_template('visu_generale.html')
+    try: 
+
+        piechart = piechart_repart_presence()
+
+        return render_template('visu_generale.html', pieChart=piechart)
+    
+    except Exception as e:
+        return jsonify({"error": f"  : {str(e)}"}), 500
 
 
 @app.route('/Statistique_groupe')
@@ -633,7 +734,7 @@ def get_people():
         """
 
 
-        # df = pd.read_sql(query_with_filter, connection, params={"id_cours": int(id_cours)})
+
         df = execute_query(query_with_filter, (id_cours,))
 
         if df is None:
