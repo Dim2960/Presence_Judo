@@ -8,7 +8,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import locale
 import os
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -20,7 +20,7 @@ import base64
 # Charger les variables d'environnement depuis le fichier .env à supp si deploiement azure 
 # + supp commentaire ligne 58 (# f'ssl_ca={ssl_cert}')
 # + inversioin dans la main de la ligne commentée et non commentée
-# load_dotenv()
+load_dotenv()
 
 
 try:
@@ -61,7 +61,7 @@ app.config.update(
     SQLALCHEMY_DATABASE_URI=(
         # f"mysql+pymysql://root:Dimarion1708&@localhost/presenceJudo"
         f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}?'
-        f'ssl_ca={ssl_cert}' 
+        # f'ssl_ca={ssl_cert}' 
     ),
     SECRET_KEY=os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
     # DEBUG=os.environ.get("DEBUG", "False").lower() in ["true", "1"]
@@ -1456,7 +1456,7 @@ def submit_attendance():
         db.session.remove()
 
 
-@app.route('/api/submitAttendanceUpdate', methods=['POST'])
+@app.route('/api/submitAttendanceUpdate', methods=['GET', 'POST'])
 def submit_attendance_update():
     data = request.json
 
@@ -1464,12 +1464,24 @@ def submit_attendance_update():
         if data is None:
             return jsonify({"error": "No data provided"}), 400
 
+        date_appel = data.get('appelDate')
+        if not date_appel:
+            return jsonify({"error": "appelDate is missing"}), 400
+
+        # Convertir la date en objet datetime / date
+        date_appel_dt = datetime.strptime(date_appel, '%Y-%m-%d')
+
         for id_enregistrement, details in data.items():
             # Extract necessary fields
+
+            if id_enregistrement == 'appelDate':
+                break
 
             status = details.get('status')
             id_appel = details.get('timestamp')
 
+            if status is None or id_appel is None:
+                return jsonify({"error": f"Missing fields in record "}), 400
 
             # Map status to boolean columns
             present = status == 'present'
@@ -1479,20 +1491,20 @@ def submit_attendance_update():
 
             # Find existing record
             existing_record = Appel.query.filter_by(
-                id=int(id_enregistrement),
-                id_appel=float(id_appel)
+                id=int(id_enregistrement)
             ).first()
-
+            
             if existing_record:
-                # Update existing record
+
+                # Update des record
                 existing_record.present = bool(present)
                 existing_record.absent = bool(absent)
                 existing_record.retard = bool(retard) 
                 existing_record.absence_excuse = bool(absence_excuse)
+                existing_record.timestamp_appel = date_appel_dt
             else:
-                # If record doesn't exist, return error
                 return jsonify({"error": f"Record not found for judoka {id_enregistrement}"}), 404
-
+            
         # Commit all updates
         db.session.commit()
         return jsonify({"message": "Les données ont été mises à jour avec succès"}), 200
@@ -1515,6 +1527,6 @@ def logout():
 
 
 if __name__ == '__main__':
-    # app.run(debug=True)
-    app.run(debug=True, host='0.0.0.0', port=80)
+    app.run(debug=True)
+    # app.run(debug=True, host='0.0.0.0', port=80)
 

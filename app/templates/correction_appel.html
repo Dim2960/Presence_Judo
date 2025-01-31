@@ -7,9 +7,19 @@
         <img src="static/images/user-icon.png" alt="User Icon">
     </div>
 
-    <div class="table-cours-info">
+    <!-- <div class="table-cours-info">
                     <h1><span id="nom-cours">Correction</span> du <span id="date"></span></h1>
                 
+    </div> -->
+
+    <div class="table-cours-info">
+        <h1>
+            <span id="nom-cours">Correction</span> du 
+            <span id="date-container" style="cursor: pointer;">
+            <span id="date"></span>
+            <input type="date" id="date-input" style="display: none;">
+            </span>
+        </h1>
     </div>
 
     <div>
@@ -84,29 +94,102 @@
 
 
 
-    fetch('/api/getAppelToCorrect')
-        .then(response => response.json())
-        .then(data => {
 
-            const date = document.getElementById(`date`);
+const dateSpan = document.getElementById('date');
+const dateInput = document.getElementById('date-input');
+const dateContainer = document.getElementById('date-container');
 
-            const lastAppelDate = data[0].timestamp_appel ? new Date(data[0].timestamp_appel) : null;
-            const formattedDate = lastAppelDate ? 
-                                    `${lastAppelDate.getDate().toString().padStart(2, '0')}/${(lastAppelDate.getMonth() + 1).toString().padStart(2, '0')}/${lastAppelDate.getFullYear().toString().slice(-2)}` : 
-                                    'No data';
+// We will store the currently displayed date (string in format "yyyy-mm-dd") 
+// in attendanceDataUpdate as 'appelDate' when changed by the user:
+attendanceDataUpdate.appelDate = null;  // Just an init; we’ll update it when the data arrives
+
+// Make the date <span> clickable:
+//  - Hide the span, show the <input type="date">
+dateContainer.addEventListener('click', () => {
+    // Show the date input
+    dateInput.style.display = 'inline';
+    // Hide the span
+    dateSpan.style.display = 'none';
+    
+    // Focus on the date input so user can pick a date
+    dateInput.focus();
+});
+
+// When user finishes picking a date (on 'change' or on 'blur'), 
+// we update the span text and hide the input:
+dateInput.addEventListener('change', () => {
+    // Retrieve the user-selected value (yyyy-mm-dd)
+    const newDateValue = dateInput.value;
+    
+    // Update the span text if user selected a date
+    if (newDateValue) {
+        // Transform it if you want a dd/mm/yy format in the span:
+        const [yyyy, mm, dd] = newDateValue.split('-');
+        const shortYear = yyyy.slice(-2);
+        const formatted = dd + '/' + mm + '/' + shortYear;
+        
+        dateSpan.textContent = formatted;
+        
+        // Store the new date in your attendanceDataUpdate:
+        attendanceDataUpdate.appelDate = newDateValue; 
+        // Or if you prefer to store the timestamp:
+        // attendanceDataUpdate.appelDate = new Date(newDateValue).getTime();
+    }
+});
+
+dateInput.addEventListener('blur', () => {
+    // Hide the date input again
+    dateInput.style.display = 'none';
+    // Show the span
+    dateSpan.style.display = 'inline';
+});
+
+// Récupération de l'appel à corriger
+fetch('/api/getAppelToCorrect')
+    .then(response => response.json())
+    .then(data => {
+        // getAppelToCorrect renvoie un tableau
+
+        const dateElement = document.getElementById('date');
+        const lastAppelDate = data[0].timestamp_appel ? new Date(data[0].timestamp_appel) : null;
+        
+        const formattedDate = lastAppelDate 
+            ? `${lastAppelDate.getDate().toString().padStart(2, '0')}/
+                ${(lastAppelDate.getMonth() + 1).toString().padStart(2, '0')}/
+                ${lastAppelDate.getFullYear().toString().slice(-2)}`
+            : 'No data';
+        
+        // update the displayed span
+        dateElement.innerHTML = formattedDate;
+
+        // Also set the <input type="date"> so that it is in sync
+        if (lastAppelDate) {
+            // Convert to yyyy-mm-dd
+            const yyyy = lastAppelDate.getFullYear();
+            const mm = String(lastAppelDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(lastAppelDate.getDate()).padStart(2, '0');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
             
-            date.innerHTML = formattedDate;
+            // We set the initial date in attendanceDataUpdate
+            attendanceDataUpdate.appelDate = dateInput.value;
+        }
 
-            const nom_cours = document.getElementById(`nom-cours`);
-            nom_cours.innerHTML += " " + data[0].nom_cours;
+        // Nom du cours
+        const nom_cours = document.getElementById('nom-cours');
+        nom_cours.innerHTML += ' ' + data[0].nom_cours;
 
-            data.forEach(person => {
+        // Récupère le tableau d'appel
+        data.forEach(person => {
+            attendanceDataUpdate[person.id] = {
+                status: person.status,
+                timestamp: person.id_appel,
+                id_cours: person.id_cours
+            };
 
-                attendanceDataUpdate[person.id] = { status: person.status, timestamp: person.id_appel, id_cours: person.id_cours };
-                const line = document.createElement('tr');
-                line.className = 'person-line';
-                line.setAttribute('data-id', person.id);
-                line.innerHTML = `
+            const line = document.createElement('tr');
+            line.className = 'person-line';
+            line.setAttribute('data-id', person.id);
+            line.innerHTML = `
                 <td>
                     <span class="prenom">${person.PRENOM}</span>
                     <span class="nom">${person.NOM}</span>
@@ -123,77 +206,69 @@
                 <td>
                     <button id="present-btn-${ person.id }" class="correction-button present-btn-correction">✅</button>
                 </td>
-                `;
+            `;
 
-                // gestion des boutons - Ajouter les listeners sur les boutons - Ajout en affichage des status sélectionnés
-                const absentBtn = line.querySelector('.absent-btn-correction');
-                absentBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'absent', absentBtn));
-                if (person.absent) { absentBtn.classList.add('success'); }
+            const absentBtn = line.querySelector('.absent-btn-correction');
+            absentBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'absent', absentBtn));
+            if (person.absent) absentBtn.classList.add('success');
 
-                const absentJustifieBtn = line.querySelector('.absent-justifie-btn-correction');
-                absentJustifieBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'absent_justifie', absentJustifieBtn));
-                if (person.absence_excuse) { absentJustifieBtn.classList.add('success'); }
+            const absentJustifieBtn = line.querySelector('.absent-justifie-btn-correction');
+            absentJustifieBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'absent_justifie', absentJustifieBtn));
+            if (person.absence_excuse) absentJustifieBtn.classList.add('success');
 
-                const retardBtn = line.querySelector('.retard-btn-correction');
-                retardBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'retard', retardBtn));
-                if (person.retard) { retardBtn.classList.add('success'); }
+            const retardBtn = line.querySelector('.retard-btn-correction');
+            retardBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'retard', retardBtn));
+            if (person.retard) retardBtn.classList.add('success');
 
-                const presentBtn = line.querySelector('.present-btn-correction');
-                presentBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'present', presentBtn));
-                if (person.present) { presentBtn.classList.add('success'); }
+            const presentBtn = line.querySelector('.present-btn-correction');
+            presentBtn.addEventListener('click', () => updateStatusCorrection(person.id, 'present', presentBtn));
+            if (person.present) presentBtn.classList.add('success');
 
-                appelTable.appendChild(line);
-
-            })
-            
-        })
-        .catch(error => console.error('Erreur sur l\'appel API getAppelToCorrect:', error));
-
-
-
-    // Validation de la modification
-
-    document.getElementById('submit-attendance-update-top').addEventListener('click', () => {
-        fetch('/api/submitAttendanceUpdate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(attendanceDataUpdate) // Envoi des données collectées
-        })
-        .then(response => {
-            console.info(attendanceDataUpdate)
-            if (!response.ok) {
-                throw new Error('Erreur lors de l\'envoi des données');
-            }
-            // alert('Données envoyées avec succès !');
-            // Redirection vers la page d'accueil
-            window.location.href = '/';
-        })
-        .catch(error => {
-            console.error(error);
-            alert('Une erreur s\'est produite lors de l\'envoi des données.');
+            appelTable.appendChild(line);
         });
-    });
+    })
+    .catch(error => console.error('Erreur sur l\'appel API getAppelToCorrect:', error));
 
-    document.getElementById('submit-attendance-update-bottom').addEventListener('click', () => {
-        fetch('/api/submitAttendanceUpdate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(attendanceDataUpdate) // Envoi des données collectées
-        })
-        .then(response => {
-            console.info(attendanceDataUpdate)
-            if (!response.ok) {
-                throw new Error('Erreur lors de l\'envoi des données');
-            }
-            // alert('Données envoyées avec succès !');
-            // Redirection vers la page d'accueil
-            window.location.href = '/';
-        })
-        .catch(error => {
-            console.error(error);
-            alert('Une erreur s\'est produite lors de l\'envoi des données.');
-        });
+
+// ...
+// Lorsque vous envoyez les données, envoyez également la date sélectionnée (attendanceDataUpdate.appelDate)
+document.getElementById('submit-attendance-update-top').addEventListener('click', () => {
+    fetch('/api/submitAttendanceUpdate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(attendanceDataUpdate) // Envoi des données collectées, incluant la nouvelle date
+    })
+    .then(response => {
+        if (!response.ok) {
+            console.log(attendanceDataUpdate);
+            throw new Error('Erreur lors de l\'envoi des données');
+        }
+        window.location.href = '/';
+    })
+    .catch(error => {
+        console.error(error);
+        alert('Une erreur s\'est produite lors de l\'envoi des données.');
     });
+});
+
+document.getElementById('submit-attendance-update-bottom').addEventListener('click', () => {
+    fetch('/api/submitAttendanceUpdate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(attendanceDataUpdate)
+    })
+    .then(response => {
+        console.info(attendanceDataUpdate);
+        if (!response.ok) {
+            throw new Error('Erreur lors de l\'envoi des données');
+        }
+        window.location.href = '/';
+    })
+    .catch(error => {
+        console.error(error);
+        alert('Une erreur s\'est produite lors de l\'envoi des données.');
+    });
+});
 
 </script>
 
