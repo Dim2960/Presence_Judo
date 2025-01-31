@@ -523,7 +523,6 @@ def update_coursUser(id_user):
 
         # Ajouter les nouvelles relations
         for row_cours in cours:
-            print("row_cours : ", row_cours)
             new_relation = RelationUserCours(user_id=id_user, cours_id=row_cours)
             db.session.add(new_relation)
 
@@ -577,9 +576,12 @@ def extractAppel():
         # Charger les données 
         query = f"""
             SELECT 
-                *   
+                a.*, 
+                c.nom_cours 
             FROM 
-                appel a ;
+                appel a 
+            JOIN 
+                cours c ON a.id_cours = c.id;
         """
         
         df = execute_query(query)
@@ -617,23 +619,22 @@ def repart_presence_cours(df):
         return jsonify({"error": "Erreur lors de la récupération des données. df est None"}), 500
     
     # Group by id_cours and aggregate the boolean columns
-    result = df.groupby('id_cours').agg({
+    result = df.groupby('nom_cours').agg({
         'present': lambda x: x.eq(1).sum(),
         'absent': lambda x: x.eq(1).sum(), 
         'retard': lambda x: x.eq(1).sum(),
         'absence_excuse': lambda x: x.eq(1).sum()
     }).reset_index()
 
-    print("result : ", result)
     # Melt the dataframe to get categories in one column
     df_melted = pd.melt(
         result,
-        id_vars=['id_cours'],
+        id_vars=['nom_cours'],
         value_vars=['present', 'absent', 'retard', 'absence_excuse'],
         var_name='Category',
         value_name='Value'
     )
-    print("df_melt : ",df_melted)
+
     # Map French labels
     category_map = {
         'present': 'Présent',
@@ -661,46 +662,60 @@ def graphToImg(fig):
     return pngImageB64String
 
 
-def piechart(df: pd.DataFrame, titre:str): 
-
+def piechart(df: pd.DataFrame, titre: str): 
     colors = sns.color_palette('pastel')[0:len(df)]
 
-    # Création de la figure
-    fig, ax = plt.subplots()
+    # Création de la figure avec une taille plus grande
+    fig, ax = plt.subplots(figsize=(8, 8))  # Ajuste la taille ici
+
     ax.pie(
         df['Value'],
         labels=df['Category'].tolist(),
         colors=colors,
-        autopct='%.0f%%'
+        autopct='%.0f%%',
+        startangle=90,  # Pour commencer à 90° et améliorer la lisibilité
+        textprops={'fontsize': 12}  # Augmenter la taille du texte
     )
-    ax.set_title(titre)
+
+    ax.set_title(titre, fontsize=14)  # Augmenter la taille du titre
+    ax.set_aspect('equal')  # Assurer un cercle parfait
+
+    # Suppression de la couleur de fond
+    ax.set_facecolor("none")  # Fond de l'axe transparent
+    fig.patch.set_alpha(0)  # Fond de la figure transparent
+
+    # Suppression des marges inutiles
+    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+    # Ajustement automatique de la mise en page
+    plt.tight_layout()
 
     return fig
 
 
-def barchart(df: pd.DataFrame, titre:str): 
+def barchart(df: pd.DataFrame, titre: str): 
 
-    total_par_cours = df.groupby('id_cours')['Value'].transform('sum')
-
+    # Calcul du pourcentage par cours
+    total_par_cours = df.groupby('nom_cours')['Value'].transform('sum')
     df['Value'] = (df['Value'] / total_par_cours) * 100  
 
-    # Création de la figure avec une taille spécifique
-    plt.figure(figsize=(10, 6))
-    fig, ax = plt.subplots()
+    # Création de la figure
+    fig, ax = plt.subplots(figsize=(10, 6))
     
-    # Création du barplot avec les valeurs en pourcentage
+    # Création du barplot avec la palette pastelle
     barplot = sns.barplot(
         data=df,
-        x='id_cours',
+        x='nom_cours',
         y='Value',
         hue='Category',
+        palette=sns.color_palette("pastel")  # Palette de couleurs pastelle
     )
     
-    ax.set_title(titre)
+    ax.set_title(titre, fontsize=14)
     ax.set_xlabel('Cours')
     ax.set_ylabel('Pourcentage (%)')
-    
-        # Ajouter les étiquettes sur les barres
+
+    # Ajouter les étiquettes sur les barres
     for container in barplot.containers:
         for rect in container:
             height = rect.get_height()  # Récupérer la hauteur de la barre
@@ -714,9 +729,18 @@ def barchart(df: pd.DataFrame, titre:str):
                     fontsize=10, 
                     color='black'  # Couleur du texte
                 )
+
     # Rotation des labels pour une meilleure lisibilité
     plt.xticks(rotation=45, ha='right')
-    
+
+    # Suppression des bordures du haut et de droite
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    # Suppression de la couleur de fond
+    ax.set_facecolor("none")  # Fond de l'axe transparent
+    fig.patch.set_alpha(0)  # Fond de la figure transparent
+
     # Ajustement automatique de la mise en page
     plt.tight_layout()
 
@@ -774,7 +798,7 @@ def heatmap_presence_mois_cours():
     Extraction des données
     '''
     # Données
-    titre = "Heatmap des taux de présence par cours et par mois"
+    titre = "Taux de présence par cours et par mois"
     df_appel = extractAppel()
     
     if isinstance(df_appel, pd.DataFrame):
@@ -822,7 +846,7 @@ def presence_mois_cours(df):
     df_filtered = df[df['mois'].isin(mois_liste)]
 
     # Calcul du taux de présence par id_cours et par mois
-    presence_stats = df_filtered.groupby(['id_cours', 'mois'])['present'].sum() / df_filtered.groupby(['id_cours', 'mois'])['present'].count()
+    presence_stats = df_filtered.groupby(['nom_cours', 'mois'])['present'].sum() / df_filtered.groupby(['nom_cours', 'mois'])['present'].count()
     presence_stats = presence_stats.unstack()  # Transformation en table pivot
 
     # Ajouter les mois manquants avec 0
@@ -835,15 +859,24 @@ def heatmap(presence_stats, titre):
     # Création de la figure
     plt.figure(figsize=(12, 6))
     fig, ax = plt.subplots(figsize=(12, 6))
+
+    # Utilisation d'une palette pastel
+    # Récupérer la palette pastel
+    pastel_palette = sns.color_palette("pastel")
+    first_color_hex = pastel_palette[0]
+
+    cmap_pastel = sns.light_palette(first_color_hex, as_cmap=True)
+
     
     # Création de la heatmap
     sns.heatmap(
         presence_stats, 
-        cmap='Greens',  # Couleur de la heatmap (bleu-jaune-vert)
+        cmap=cmap_pastel,  # Couleur de la heatmap 
         annot=True,  # Affiche les valeurs sur la heatmap
         fmt=".0%",  # Format pourcentage
-        linewidths=0.5,  # Séparation entre les cases
+        linewidths=0.6,  # Séparation entre les cases
         linecolor='white',
+        vmin=0.5,
         cbar_kws={'label': 'Taux de Présence (%)'}
     )
 
@@ -851,9 +884,13 @@ def heatmap(presence_stats, titre):
     ax.set_title(titre)
     ax.set_xlabel('')
     ax.set_ylabel('')
-    
+
     plt.xticks(rotation=45, ha='right')  # Rotation des mois pour meilleure lisibilité
     plt.yticks(rotation=0)  # Garde les id_cours droits
+
+    # Suppression de la couleur de fond
+    ax.set_facecolor("none")  # Fond de l'axe transparent
+    fig.patch.set_alpha(0)  # Fond de la figure transparent
 
     plt.tight_layout()
     
@@ -1120,7 +1157,6 @@ def getCoursUser():
     try:
         id_user= current_user.id
 
-        print(id_user)
         # Charger les données 
         query_with_filter = f"""
             SELECT 
@@ -1133,8 +1169,6 @@ def getCoursUser():
         """
 
         df = execute_query(query_with_filter, (id_user,))
-
-        print(df)
 
         if df is None:
             return jsonify({"error": "Erreur lors de la récupération des données. df est None"}), 500
@@ -1405,9 +1439,6 @@ def update_status():
 @app.route('/api/submitAttendance', methods=['POST'])
 def submit_attendance():
     data = request.json
-    # Traitement des données
-    # enregistrement dans une base de données ou fichier
-    print("Attendance data received:", data)
     try:
         if data is None:
             return jsonify({"error": "No data provided"}), 400
