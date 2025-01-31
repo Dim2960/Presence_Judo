@@ -1,4 +1,5 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, session, g
+from flask.wrappers import Response
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -7,7 +8,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import locale
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -19,7 +20,7 @@ import base64
 # Charger les variables d'environnement depuis le fichier .env à supp si deploiement azure 
 # + supp commentaire ligne 58 (# f'ssl_ca={ssl_cert}')
 # + inversioin dans la main de la ligne commentée et non commentée
-load_dotenv()
+# load_dotenv()
 
 
 try:
@@ -60,7 +61,7 @@ app.config.update(
     SQLALCHEMY_DATABASE_URI=(
         # f"mysql+pymysql://root:Dimarion1708&@localhost/presenceJudo"
         f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}?'
-        # f'ssl_ca={ssl_cert}' 
+        f'ssl_ca={ssl_cert}' 
     ),
     SECRET_KEY=os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
     # DEBUG=os.environ.get("DEBUG", "False").lower() in ["true", "1"]
@@ -611,6 +612,42 @@ def repart_presence_general(df) :
     return df
 
 
+def repart_presence_cours(df):
+    if not isinstance(df, pd.DataFrame):
+        return jsonify({"error": "Erreur lors de la récupération des données. df est None"}), 500
+    
+    # Group by id_cours and aggregate the boolean columns
+    result = df.groupby('id_cours').agg({
+        'present': lambda x: x.eq(1).sum(),
+        'absent': lambda x: x.eq(1).sum(), 
+        'retard': lambda x: x.eq(1).sum(),
+        'absence_excuse': lambda x: x.eq(1).sum()
+    }).reset_index()
+
+    print("result : ", result)
+    # Melt the dataframe to get categories in one column
+    df_melted = pd.melt(
+        result,
+        id_vars=['id_cours'],
+        value_vars=['present', 'absent', 'retard', 'absence_excuse'],
+        var_name='Category',
+        value_name='Value'
+    )
+    print("df_melt : ",df_melted)
+    # Map French labels
+    category_map = {
+        'present': 'Présent',
+        'absent': 'Absent',
+        'retard': 'Retard',
+        'absence_excuse': 'Excusé'
+    }
+    df_melted['Category'] = df_melted['Category'].map(category_map)
+
+
+
+    return df_melted
+
+
 def graphToImg(fig):
     # Sauvegarde du graphique dans un buffer mémoire
     pngImage = io.BytesIO()
@@ -641,6 +678,51 @@ def piechart(df: pd.DataFrame, titre:str):
     return fig
 
 
+def barchart(df: pd.DataFrame, titre:str): 
+
+    total_par_cours = df.groupby('id_cours')['Value'].transform('sum')
+
+    df['Value'] = (df['Value'] / total_par_cours) * 100  
+
+    # Création de la figure avec une taille spécifique
+    plt.figure(figsize=(10, 6))
+    fig, ax = plt.subplots()
+    
+    # Création du barplot avec les valeurs en pourcentage
+    barplot = sns.barplot(
+        data=df,
+        x='id_cours',
+        y='Value',
+        hue='Category',
+    )
+    
+    ax.set_title(titre)
+    ax.set_xlabel('Cours')
+    ax.set_ylabel('Pourcentage (%)')
+    
+        # Ajouter les étiquettes sur les barres
+    for container in barplot.containers:
+        for rect in container:
+            height = rect.get_height()  # Récupérer la hauteur de la barre
+            if height > 0:  # Éviter d'afficher les labels sur des barres vides
+                ax.text(
+                    rect.get_x() + rect.get_width() / 2,  # Position X (au centre de la barre)
+                    height,  # Position Y (au-dessus de la barre)
+                    f'{height:.0f}%',  # Format en pourcentage
+                    ha='center',  # Alignement horizontal
+                    va='bottom',  # Alignement vertical
+                    fontsize=10, 
+                    color='black'  # Couleur du texte
+                )
+    # Rotation des labels pour une meilleure lisibilité
+    plt.xticks(rotation=45, ha='right')
+    
+    # Ajustement automatique de la mise en page
+    plt.tight_layout()
+
+    return fig
+
+
 def piechart_repart_presence():
     '''
     Extraction des données
@@ -664,6 +746,120 @@ def piechart_repart_presence():
     return graphToImg(fig_piechart)
 
 
+def barChart_repart_presence():
+    '''
+    Extraction des données
+    '''
+    # Données
+    titre = "Répartition des présences par cours"
+    df_appel = extractAppel()
+    
+    if isinstance(df_appel, pd.DataFrame):
+        df_repart_cours = repart_presence_cours(df_appel)
+        
+        if isinstance(df_repart_cours, pd.DataFrame):
+            # Parametrage et Génération du graphique
+            fig_barchart = barchart(df_repart_cours, titre)
+        else:
+            return jsonify({"error": "Erreur lors du traitement des données"}), 500
+    else:
+        return jsonify({"error": "Erreur lors de l'extraction des données"}), 500
+
+    # Convertir graph en image
+    return graphToImg(fig_barchart)
+
+
+def heatmap_presence_mois_cours():
+    '''
+    Extraction des données
+    '''
+    # Données
+    titre = "Heatmap des taux de présence par cours et par mois"
+    df_appel = extractAppel()
+    
+    if isinstance(df_appel, pd.DataFrame):
+        df_repart_cours = presence_mois_cours(df_appel)
+        
+        if isinstance(df_repart_cours, pd.DataFrame):
+            # Parametrage et Génération du graphique
+            fig_heatmap = heatmap(df_repart_cours, titre)
+        else:
+            return jsonify({"error": "Erreur lors du traitement des données"}), 500
+    else:
+        return jsonify({"error": "Erreur lors de l'extraction des données"}), 500
+
+    # Convertir graph en image
+    return graphToImg(fig_heatmap)
+
+
+def presence_mois_cours(df):
+    # Vérification du type de df
+    if not isinstance(df, pd.DataFrame):
+        return {"error": "Erreur lors de la récupération des données"}, 500
+        
+    # Vérification et conversion de la colonne 'timestamp_appel' en datetime
+    if 'timestamp_appel' in df.columns:
+        df['timestamp_appel'] = pd.to_datetime(df['timestamp_appel'])
+        df['mois'] = df['timestamp_appel'].dt.strftime('%Y-%m')  # Format Année-Mois
+    else:
+        return "Erreur : La colonne 'timestamp_appel' est manquante dans le DataFrame."
+
+    # Déterminer la date actuelle
+    today = datetime.now().date()
+
+    # Trouver le dernier mois de septembre passé
+    annee_courante = today.year
+    if today.month < 9:  # Si on est avant septembre, on prend septembre de l'année précédente
+        annee_septembre = annee_courante - 1
+    else:
+        annee_septembre = annee_courante
+
+    # Générer les 12 mois de septembre -> août suivant
+    mois_debut = datetime(annee_septembre, 9, 1)  # Septembre de l'année sélectionnée
+    mois_liste = [(mois_debut + timedelta(days=30*i)).strftime('%Y-%m') for i in range(12)]
+
+    # Filtrer uniquement les données des 12 mois sélectionnés
+    df_filtered = df[df['mois'].isin(mois_liste)]
+
+    # Calcul du taux de présence par id_cours et par mois
+    presence_stats = df_filtered.groupby(['id_cours', 'mois'])['present'].sum() / df_filtered.groupby(['id_cours', 'mois'])['present'].count()
+    presence_stats = presence_stats.unstack()  # Transformation en table pivot
+
+    # Ajouter les mois manquants avec 0
+    presence_stats = presence_stats.reindex(columns=mois_liste, fill_value=0)
+
+    return presence_stats
+
+
+def heatmap(presence_stats, titre):
+    # Création de la figure
+    plt.figure(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    # Création de la heatmap
+    sns.heatmap(
+        presence_stats, 
+        cmap='Greens',  # Couleur de la heatmap (bleu-jaune-vert)
+        annot=True,  # Affiche les valeurs sur la heatmap
+        fmt=".0%",  # Format pourcentage
+        linewidths=0.5,  # Séparation entre les cases
+        linecolor='white',
+        cbar_kws={'label': 'Taux de Présence (%)'}
+    )
+
+    # Configuration des labels
+    ax.set_title(titre)
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    
+    plt.xticks(rotation=45, ha='right')  # Rotation des mois pour meilleure lisibilité
+    plt.yticks(rotation=0)  # Garde les id_cours droits
+
+    plt.tight_layout()
+    
+    return fig
+
+
 @app.route('/Statistique_generale')
 @login_required
 def Statistique_generale() :
@@ -671,7 +867,11 @@ def Statistique_generale() :
 
         piechart = piechart_repart_presence()
 
-        return render_template('visu_generale.html', pieChart=piechart)
+        barChart = barChart_repart_presence()
+
+        HeatMap= heatmap_presence_mois_cours()
+
+        return render_template('visu_generale.html', pieChart=piechart, barChart=barChart, HeatMap=HeatMap)
     
     except Exception as e:
         return jsonify({"error": f"  : {str(e)}"}), 500
@@ -1315,6 +1515,6 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
-    # app.run(debug=True, host='0.0.0.0', port=80)
+    # app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=80)
 
