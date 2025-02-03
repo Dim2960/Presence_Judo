@@ -80,7 +80,7 @@
                     <div class="nom-cours">${cours.nom_cours}</div>
                 </td>
                 <td>
-                    <form action="{{ url_for('correction_cours') }}" method="post">
+                    <form action="{{ url_for('main.correction_cours') }}" method="post">
                         <input type="hidden" name="nom_cours" value="${cours.nom_cours}">
                         <input type="hidden" id="id_cours-${cours.id_cours}" name="id_cours" value="${cours.id}">
                         <button id="modif-btn-${ cours.id }" class="correction-button modif-btn-correction">✏️</button>

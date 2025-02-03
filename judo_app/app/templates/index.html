@@ -10,8 +10,8 @@
     <h1>Bienvenue {{ current_user.prenom }} </h1>
 
     <form method="POST">
-    <a href="{{ url_for('appel_menu') }}"><button type="button">Faire un appel</button></a>
-    <a href="{{ url_for('Statistique_generale') }}"><button type="button">Statistiques</button></a>
+    <a href="{{ url_for('main.appel_menu') }}"><button type="button">Faire un appel</button></a>
+    <a href="{{ url_for('main.Statistique_generale') }}"><button type="button">Statistiques</button></a>
     </form>
     
 </div>

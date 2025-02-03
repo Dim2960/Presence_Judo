@@ -41,7 +41,7 @@
                     <div class="nom-cours">${appelCours.nom_cours}</div>
                 </td>
                 <td>
-                    <form action="{{ url_for('correction_appel') }}" method="post">
+                    <form action="{{ url_for('main.correction_appel') }}" method="post">
                         <input type="hidden" name="nom_cours" value="${appelCours.nom_cours}">
                         <input type="hidden" name="id_cours" value="${appelCours.id_cours}">
                         <input type="hidden" id="id_appel-${appelCours.id_cours}" name="id_appel" value="${appelCours.id_appel}">

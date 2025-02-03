@@ -14,12 +14,12 @@
 
     <!-- Contenu du menu -->
     <ul id="menu">
-        <li><a href="{{ url_for('index') }}">Accueil</a></li>
-        <li><a href="{{ url_for('mon_profil') }}">Mon Profil</a></li>
-        <li><a href="{{ url_for('configuration_cours') }}">Configuration des Cours</a></li>
-        <li><a href="{{ url_for('menu_correction_appel') }}">Correction d'un appel</a></li>
+        <li><a href="{{ url_for('main.index') }}">Accueil</a></li>
+        <li><a href="{{ url_for('main.mon_profil') }}">Mon Profil</a></li>
+        <li><a href="{{ url_for('main.configuration_cours') }}">Configuration des Cours</a></li>
+        <li><a href="{{ url_for('main.menu_correction_appel') }}">Correction d'un appel</a></li>
         <li><br/></li>
-        <li><a href="{{ url_for('logout') }}">Déconnexion</a></li>
+        <li><a href="{{ url_for('auth.logout') }}">Déconnexion</a></li>
     </ul>
 
     <script>
@@ -42,8 +42,8 @@
 {% else %}
 
     <div class="navbar">
-        <a href="{{ url_for('login') }}"><button class="btn-con" >Connexion</button></a>
-        <a href="{{ url_for('register') }}"><button class="btn-enr" >Enregistrement</button></a>
+        <a href="{{ url_for('auth.login') }}"><button class="btn-con" >Connexion</button></a>
+        <a href="{{ url_for('auth.register') }}"><button class="btn-enr" >Enregistrement</button></a>
     </div>
 
 {% endif %}
