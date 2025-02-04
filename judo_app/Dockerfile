@@ -2,7 +2,7 @@
 FROM python:3.12-slim
 
 # Définir le répertoire de travail
-WORKDIR /app
+WORKDIR /judo_app
 
 # Copier et installer les dépendances
 COPY requirements.txt .
@@ -28,6 +28,6 @@ RUN chmod +x /entrypoint.sh
 EXPOSE 80
 
 # Spécifier la commande de démarrage de l'application
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:80", "app:app"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:80", "run:app"]
 
 
