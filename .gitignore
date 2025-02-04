@@ -164,7 +164,10 @@ cython_debug/
 
 # dossier de data à ne pas diffuser
 data/
-script
+script/bdd_integration.ipynb
+script/insert_csv.ipynb
+script/insert_csv.py
+script/scrapping_licence.ipynb
 
 certs/
 .env
@@ -172,3 +175,5 @@ certs/
 uv.lock
 requirements.txt
 liste.csv
+pyproject.toml
+.python-version
