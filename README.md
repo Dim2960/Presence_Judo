@@ -9,7 +9,7 @@ JudoApp est une application web permettant de suivre la présence des judokas lo
 - Affichage et correction des présences
 - Exportation des données de présence
 - Analyse statistique des fréquentations
-- Interface web avec pages HTML et CSS
+- Interface web avec pages HTML, CSS et javascript
 - Gestion des cours et des catégories d'âge
 - Profils utilisateurs avec connexion à France Judo
 
@@ -43,11 +43,11 @@ Avant de lancer l'application, initialisez la base de données MySQL en exécuta
 Assurez-vous d'avoir configuré correctement les variables d'environnement pour la connexion à la base de données.
 
 ### Exemple de fichier `.env`
-Créez un fichier `.env` à la racine du projet avec le contenu suivant :
+Créez un fichier `.env` dans le dossier judo_app avec le contenu suivant :
 ```ini
 AZURE_MYSQL_USERNAME=root
 AZURE_MYSQL_PASSWORD=[mySqlPassword]
-AZURE_MYSQL_DATABASE=
+AZURE_MYSQL_DATABASE=presenceJudo
 AZURE_MYSQL_HOST=localhost
 MYSQL_SSL_CA=certs/DigiCertGlobalRootCA.crt.pem
 DEBUG=True

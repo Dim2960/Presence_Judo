@@ -1,16 +1,20 @@
 -- Active: 1737731483941@@judoapp-server.mysql.database.azure.com@3306@judoapp-database
 
 
-USE "presenceJudo";
+USE `presenceJudo`;
+
 
 
 CREATE TABLE connexion_user (
     id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(150) NOT NULL UNIQUE,
     password VARCHAR(150) NOT NULL
+    CONSTRAINT fk_user FOREIGN KEY (id_user)
+        REFERENCES connexion_user(id) 
+        ON DELETE CASCADE
 );
 
-CREATE TABLE user (
+CREATE TABLE `user` (
     id INT AUTO_INCREMENT PRIMARY KEY,                      -- Clé primaire unique pour la table
     id_user INT NOT NULL,                                   -- Colonne pour la clé étrangère (non nulle)
     prenom VARCHAR(150) NOT NULL,                          -- Prénom obligatoire
