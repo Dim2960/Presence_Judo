@@ -1,10 +1,11 @@
-# app/models.py
 from .extensions import db
 from flask_login import UserMixin
 import pandas as pd
 
-# Modèle User
 class User(db.Model):
+    """
+    Modèle représentant un utilisateur.
+    """
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     id_user = db.Column(db.Integer, db.ForeignKey('connexion_user.id'), nullable=False)
@@ -27,62 +28,58 @@ class User(db.Model):
         viewonly=True, 
         overlaps="connexion_user,linked_user")
 
-
-
-# Modèle Connexion_user
 class Connexion_user(UserMixin, db.Model):
-
+    """
+    Modèle représentant un utilisateur pour la connexion.
+    """
     __tablename__ = 'connexion_user'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
+    password = db.Column(db.String(150), nullable=False)
 
     def __init__(self, email, password):
         self.email = email
         self.password = password
-
     
-
     def get_id(self):
         return str(self.id)
-    
-
-    password = db.Column(db.String(150), nullable=False)    
     
     # Relation avec User
     users = db.relationship(
         'User',
         lazy=True,
-        viewonly=True,  # Utilisé pour une relation en lecture seule
+        viewonly=True,
         overlaps="linked_user,linked_connexion"
     )
 
-    # Propriété pour accéder au prénom depuis la relation
     @property
     def prenom(self):
-        # Retourne le prénom associé au Connexion_user
+        """Retourne le prénom associé à l'utilisateur."""
         user = User.query.filter_by(id_user=self.id).first()
         return user.prenom if user else None
     
     @property
     def nom(self):
-        # Retourne le prénom associé au Connexion_user
+        """Retourne le nom associé à l'utilisateur."""
         user = User.query.filter_by(id_user=self.id).first()
         return user.nom if user else None
     
     @property
     def francejudo_id(self):
-        # Retourne le prénom associé au Connexion_user
+        """Retourne l'ID France Judo associé à l'utilisateur."""
         user = User.query.filter_by(id_user=self.id).first()
         return user.francejudo_id if user else None
     
     @property
     def francejudo_pwd(self):
-        # Retourne le prénom associé au Connexion_user
+        """Retourne le mot de passe France Judo associé à l'utilisateur."""
         user = User.query.filter_by(id_user=self.id).first()
         return user.francejudo_pwd if user else None
 
-
 class Cours(db.Model):
+    """
+    Modèle représentant un cours.
+    """
     __tablename__ = 'cours'
     id = db.Column(db.Integer, primary_key=True)
     nom_cours = db.Column(db.String(255), nullable=False)
@@ -93,8 +90,10 @@ class Cours(db.Model):
         self.nom_cours = nom_cours
         self.categorie_age = categorie_age
 
-
 class RelationCours(db.Model):
+    """
+    Modèle représentant la relation entre un cours et une catégorie d'âge.
+    """
     __tablename__ = 'relation_cours_categorie_age'
     id = db.Column(db.Integer, primary_key=True)
     id_cours = db.Column(db.Integer, nullable=False)
@@ -104,22 +103,24 @@ class RelationCours(db.Model):
         self.id_cours = id_cours
         self.id_categorie_age = id_categorie_age
 
-
 class RelationUserCours(db.Model):
+    """
+    Modèle représentant la relation entre un utilisateur et un cours.
+    """
     __tablename__ = 'relation_user_cours'
     id = db.Column(db.Integer, primary_key=True)
     id_user = db.Column(db.Integer, nullable=False)
     id_cours = db.Column(db.Integer, nullable=False)
 
     def __init__(self, user_id: int, cours_id: int):
-        self.id_user: int = user_id
+        self.id_user = user_id
         self.id_cours = cours_id
 
-
-
 class Appel(db.Model):
+    """
+    Modèle représentant un appel de présence.
+    """
     __tablename__ = 'appel'
-
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_judoka = db.Column(db.Integer, nullable=False)
     id_cours = db.Column(db.Integer, nullable=False)
@@ -140,8 +141,10 @@ class Appel(db.Model):
         self.absence_excuse = absence_excuse
         self.id_appel = id_appel
 
-
 def execute_query(query, params=None):
+    """
+    Exécute une requête SQL et retourne les résultats sous forme de DataFrame.
+    """
     try:
         with db.engine.connect() as connection:
             return pd.read_sql(query, connection, params=params)
