@@ -177,3 +177,4 @@ requirements.txt
 liste.csv
 pyproject.toml
 .python-version
+.gitignore
