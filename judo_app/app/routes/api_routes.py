@@ -1,4 +1,7 @@
-# app/routes/api_routes.py
+# Copyright (c) 2025 Dimitri Lefebvre
+# Tous droits réservés. Ce fichier fait partie d'un logiciel propriétaire.
+# Son utilisation est soumise aux conditions définies dans le fichier LICENSE.
+
 from flask import Blueprint, jsonify, request, session
 from flask_login import login_required, current_user
 from datetime import datetime

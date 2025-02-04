@@ -1,3 +1,7 @@
+# Copyright (c) 2025 Dimitri Lefebvre
+# Tous droits réservés. Ce fichier fait partie d'un logiciel propriétaire.
+# Son utilisation est soumise aux conditions définies dans le fichier LICENSE.
+
 from flask import (
     Blueprint, 
     render_template, 
@@ -112,7 +116,7 @@ def appel_encours():
     
     return render_template('appel_encours.html', nom_cours=nom_cours, id_cours=id_cours, today=today)
 
-@main_bp.route('/Statistique_generale')
+@main_bp.route('/statistique_generale')
 @login_required
 def statistique_generale():
     """
@@ -127,7 +131,7 @@ def statistique_generale():
     except Exception as e:
         return jsonify({"error": f"Erreur : {str(e)}"}), 500
 
-@main_bp.route('/Statistique_groupe')
+@main_bp.route('/statistique_groupe')
 @login_required
 def statistique_groupe():
     """

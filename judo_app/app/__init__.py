@@ -1,3 +1,7 @@
+# Copyright (c) 2025 Dimitri Lefebvre
+# Tous droits réservés. Ce fichier fait partie d'un logiciel propriétaire.
+# Son utilisation est soumise aux conditions définies dans le fichier LICENSE.
+
 from flask import Flask
 from .config import Config
 from .extensions import db, login_manager, sess

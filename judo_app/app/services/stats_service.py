@@ -1,4 +1,7 @@
-# app/services/stats_service.py
+# Copyright (c) 2025 Dimitri Lefebvre
+# Tous droits réservés. Ce fichier fait partie d'un logiciel propriétaire.
+# Son utilisation est soumise aux conditions définies dans le fichier LICENSE.
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns

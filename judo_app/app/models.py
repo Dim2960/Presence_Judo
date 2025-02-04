@@ -1,3 +1,7 @@
+# Copyright (c) 2025 Dimitri Lefebvre
+# Tous droits réservés. Ce fichier fait partie d'un logiciel propriétaire.
+# Son utilisation est soumise aux conditions définies dans le fichier LICENSE.
+
 from .extensions import db
 from flask_login import UserMixin
 import pandas as pd
