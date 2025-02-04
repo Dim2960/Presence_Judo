@@ -11,7 +11,7 @@
 
     {% for cours_item in cours %}
 
-        <form id="form-{{ cours_item.id }}" action="{{ url_for('appel_encours') }}" method="post">
+        <form id="form-{{ cours_item.id }}" action="{{ url_for('main.appel_encours') }}" method="post">
             <input type="hidden" name="nom_cours" value="{{ cours_item.nom_cours }}">
             <input type="hidden" name="id_cours" value="{{ cours_item.id }}">
             <input type="hidden" id="id_appel-{{ cours_item.id }}" name="id_appel" value="{{ cours_item.id_appel }}">
@@ -32,7 +32,7 @@ fetch('/api/checkAppelStatus')
                 const form = document.getElementById(`form-${item.id}`);
                 if (form) {
                     if (item.cours_today) {
-                        form.action = "{{ url_for('correction_appel') }}";                    
+                        form.action = "{{ url_for('main.correction_appel') }}";                    
                         const button = document.getElementById(`button-${item.id}`);
                         const idAppel = document.getElementById(`id_appel-${item.id}`);
                                 
@@ -50,7 +50,7 @@ fetch('/api/checkAppelStatus')
                         }
                     }
                     else {
-                        form.action = "{{ url_for('appel_encours') }}";
+                        form.action = "{{ url_for('main.appel_encours') }}";
                     }
                 }
             });

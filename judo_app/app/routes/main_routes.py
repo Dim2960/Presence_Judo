@@ -1,17 +1,24 @@
-# app/routes/main_routes.py
-from flask import Blueprint, render_template, session, g, request, jsonify
-from flask_login import login_required, current_user
+from flask import (
+                        Blueprint, 
+                        render_template, 
+                        session, request, 
+                        jsonify
+                    )
+from flask_login import (
+                        login_required, 
+                        current_user
+                    )   
 from datetime import datetime
 from ..extensions import db
 from ..models import (
-    Cours, 
-    RelationUserCours
-)
+                        Cours, 
+                        RelationUserCours
+                    )
 from ..services.stats_service import (
-    piechart_repart_presence,
-    barChart_repart_presence,
-    heatmap_presence_mois_cours
-)
+                        piechart_repart_presence,
+                        barChart_repart_presence,
+                        heatmap_presence_mois_cours
+                    )
 
 main_bp = Blueprint('main', __name__)
 
@@ -89,7 +96,7 @@ def appel_encours():
 
 
     # Stocker dans la session
-    if session['id_cours'] != id_cours:
+    if  session.get('id_cours') != id_cours :
         session['data_cache'] = dict()
 
     session['id_cours'] = id_cours

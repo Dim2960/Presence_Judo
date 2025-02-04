@@ -183,10 +183,10 @@
     document.addEventListener("click", function (event) {
         if (event.target.classList.contains("supp-btn-correction")) {
         const coursId = event.target.id.split("-")[2]; // Récupère l'ID depuis l'attribut `id`
-
+        console.log(coursId);   
             
         if (confirm("Êtes-vous sûr de vouloir supprimer ce cours ?")) {
-            fetch(`/delete-cours/${coursId}`, {
+            fetch(`/api/delete-cours/${coursId}`, {
             method: "DELETE",
             })
             .then((response) => {
