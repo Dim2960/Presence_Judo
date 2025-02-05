@@ -4,7 +4,7 @@
     <div class="navbar">
         <!-- Bouton de retour -->
         {% if request.endpoint != 'main.index' %}
-            <button class="btn-left" onclick="history.back()">← Retour</button>
+            <button class="btn-left" onclick="history.back()">←</button>
         {% endif %}
 
         <!-- Bouton menu -->
@@ -31,7 +31,7 @@
         menuButton.addEventListener('click', () => {
             if (menu.style.display === 'none' || menu.style.display === '') {
                 menu.style.display = 'block'; // Afficher le menu
-                menuButton.textContent = 'Fermer le Menu'; // Changer le texte du bouton
+                menuButton.textContent = 'Fermer'; // Changer le texte du bouton
             } else {
                 menu.style.display = 'none'; // Cacher le menu
                 menuButton.textContent = 'Menu'; // Revenir au texte initial
@@ -41,9 +41,28 @@
 
 {% else %}
 
-    <div class="navbar">
-        <a href="{{ url_for('auth.login') }}"><button class="btn-con" >Connexion</button></a>
-        <a href="{{ url_for('auth.register') }}"><button class="btn-enr" >Enregistrement</button></a>
+    <div class="navbar-login">
+        <a href="{{ url_for('auth.login') }}"><button class="btn-con" id="btn-con">Connexion</button></a>
+        <a href="{{ url_for('auth.register') }}"><button class="btn-enr" id="btn-enr">Enregistrement</button></a>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const path = window.location.pathname; // Récupère le chemin de la page
+            
+            const btnConnexion = document.getElementById("btn-con");
+            const btnEnregistrement = document.getElementById("btn-enr");
+    
+            // Cacher le bouton Connexion si on est sur la page de connexion
+            if (path.includes("login")) { 
+                btnConnexion.style.display = "none";
+            }
+    
+            // Cacher le bouton Enregistrement si on est sur la page d'inscription
+            if (path.includes("register")) { 
+                btnEnregistrement.style.display = "none";
+            }
+        });
+    </script>
 
 {% endif %}

@@ -5,7 +5,7 @@
 
   
 
-  {% with messages = get_flashed_messages() %}
+  <!-- {% with messages = get_flashed_messages() %}
   
   {% if messages %}
     <ul class="flashes">
@@ -14,10 +14,10 @@
       {% endfor %}
     </ul>
   {% endif %}
-  {% endwith %}
+  {% endwith %} -->
 
   <!-- Conteneur pour le style -->
-  <div class="form-container">
+  <div class="form-container-login">
     <div class="image-container">
         <img src="static/images/user-icon.png" alt="User Icon">
     </div>
@@ -27,8 +27,10 @@
     <form method="POST">
       <label>Email:</label>
       <input type="email" name="email" required>
+      <br/>
       <label>Password:</label>
       <input type="password" name="password" required>
+      <br/>
       <button type="submit">Login</button>
     </form>
   </div>

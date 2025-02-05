@@ -1,22 +1,7 @@
 
-
-.form-container-appel {
-  background: #f7f9fa; /* Blanc cassé / gris très clair */
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  margin: 2.96vh auto;
-  position: absolute; 
-  top: 0px; 
-  left: 3vw; 
-  width: 94vw;
-  margin-top : 110px;
-  padding-top: 50px
-}
-
-.table-cours {
+/* .table-cours {
   margin: 0;
   padding-left: 2rem;
-  width: 100%;
 }
 
 .table-cours h1 {
@@ -31,7 +16,8 @@
   margin-bottom: 1rem;
   color: #05062b;
   font-weight: 400;
-}
+} */
+
 
 /* Style de base pour centrer le conteneur */
 .container {
@@ -54,7 +40,7 @@
   border-radius: 10px;
   background-color: #f9f9f9;
   box-shadow: 0 0.37vh 0.62vw rgba(0,0,0,0.1);
-  padding:0.5em
+  padding:0.5em;
 }
 
 /* Mise en page des informations */
@@ -103,6 +89,7 @@
 /* Style des boutons */
 .action-button {
   width: 38vw;
+  max-width: 300px;
   height : 6vh;
   font-size: 16px;
   font-weight: bold;
@@ -145,3 +132,78 @@
 }
 
 
+/* Masquer toutes les slides par défaut */
+
+/* Afficher uniquement la slide active */
+
+/* On peut conserver la règle pour la diapositive active si besoin */
+.swiper-slide-active {
+  display: flex;
+  flex-direction: row;
+}
+
+/* Si vous souhaitez absolument masquer le contenu interne des diapositives non actives,
+assurez-vous que cela ne s'applique qu'aux diapositives non actives, par exemple :
+*/
+.swiper-slide:not(.swiper-slide-active) * {
+  display: none;
+}
+
+
+
+
+
+    .main-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        padding: 20px;
+    }
+    
+
+
+    .cours-container {
+        text-align: center;
+        width: 100%;
+        max-width: 600px;
+    }
+    
+    .cours-stats {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 600px;
+    }
+    
+    .stats {
+        font-size: 18px;
+    }
+    
+    .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .button-submit {
+        padding: 10px 15px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+    
+    .swiper-container {
+        width: 100%;
+        max-width: 600px;
+        margin-top: 20px;
+    }
+
+    /* @media (min-width: 768px) and (orientation: landscape) {
+      .main-container {
+          flex-direction: row;
+          justify-content: space-around;
+      }
+      .cours-container, .swiper-container {
+          max-width: 45%;
+      }
+  } */

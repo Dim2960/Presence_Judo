@@ -52,7 +52,7 @@ def configuration_cours():
     """
     return render_template('config_cours.html')
 
-@main_bp.route('/appel_menu')
+@main_bp.route('/appel_menu', methods=['GET', 'POST'])
 @login_required
 def appel_menu():
     """
@@ -116,7 +116,7 @@ def appel_encours():
     
     return render_template('appel_encours.html', nom_cours=nom_cours, id_cours=id_cours, today=today)
 
-@main_bp.route('/statistique_generale')
+@main_bp.route('/statistique_generale', methods=['GET', 'POST'])
 @login_required
 def statistique_generale():
     """

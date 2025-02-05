@@ -2,36 +2,37 @@
 {% block title %}Appel en cours{% endblock %}
 {% block content %}
 
-<div class="form-container-appel">
+<div class="form-container">
 
     <div class="image-container">
         <img src="static/images/user-icon.png" alt="User Icon">
     </div>
 
-    <table class="table-cours">
-        <tbody>
-            <tr>
-                <td colspan = 2>
-                    <h1>{{nom_cours}} </h1>
-                    <h2> {{today}} </h2> 
-                </td>
-            </tr>
-            <tr>
-                <td>
+    <div class="main-container">
+        <div class="cours-container">
+            <div class="cours-header">
+                <h1>{{nom_cours}}</h1>
+                <h2>{{today}}</h2>
+            </div>
+            
+            <div class="cours-stats">
+                <div class="stats">
                     <span id="count-present">0</span> présents
                     <br/>
                     <span id="count-absent">0</span> Absents
-                </td>
-                <td>
-                        <button class="button-submit" id="remaining-button" type="button">Restant à définir : <span id="count-non-defini"></span></button>
-                        <button class="button-submit" id="submit-attendance" type="submit" >Valider l'appel</button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+                </div>
+                <div class="actions">
+                    <button class="button-submit" id="remaining-button" type="button">
+                        Restant à définir : <span id="count-non-defini"></span>
+                    </button>
+                    <button class="button-submit" id="submit-attendance" type="submit">Valider l'appel</button>
+                </div>
+            </div>
+        </div>
 
-    <div class="swiper-container">
-        <div class="swiper-wrapper" id="swiper-wrapper"></div>
+        <div class="swiper-container">
+            <div class="swiper-wrapper" id="swiper-wrapper"></div>
+        </div>
     </div>
 </div>
     
@@ -53,6 +54,7 @@
         function initSwiper() {
             swiper = new Swiper('.swiper-container', {
                 loop: false,
+                speed: 100,
                 navigation: {
                     nextEl: '.swiper-button-next',
                     prevEl: '.swiper-button-prev',
@@ -64,6 +66,7 @@
                 }
             });
         }
+
 
         // Initialiser le swiper après le chargement de la page
         document.addEventListener('DOMContentLoaded', () => {
@@ -86,6 +89,7 @@
             }
 
         }
+
 
         function updateCounters() {
             // Récupération des compteurs à partir des éléments HTML
@@ -157,6 +161,7 @@
 
                 // Mettre à jour les compteurs
                 updateCounters();
+                    
 
                 // Vérifier si swiper est défini avant de changer de slide
                 if (swiper) {
@@ -185,8 +190,8 @@
                     slide.setAttribute('data-id', person.id);
 
                     slide.innerHTML = `
-                    <div class="container">
-                        <div class="profile-card">
+                    <div class="container" >
+                        <div class="profile-card" >
                             <h2>${person.PRENOM} ${person.NOM}</h2>
                             <button hidden  onclick="swiper.slideNext()">Next Slide</button>
                             <p>Sexe : ${person.SEXE}</p>
@@ -233,8 +238,14 @@
 
                     updateCounters();
                     checkRemainingCount();
+                
+                    });
 
-                })
+                    // Mettre à jour swiper pour intégrer les nouvelles slides
+                    if (swiper) {
+                        swiper.update();
+                    }
+
                 })
                 .catch(error => {
                 console.error(error);
@@ -264,6 +275,7 @@
                 alert('Une erreur s\'est produite lors de l\'envoi des données.');
             });
         });
+
 
     </script>
 

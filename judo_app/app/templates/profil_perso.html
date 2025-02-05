@@ -15,37 +15,40 @@
             <div class="container-1">
                 <div class="container-1">
                     <div class="container-2">
-                        Nom: 
-                    </div>
-                    <div class="container-2">
-                        <input type="text" value="{{ current_user.nom }}" >
-                    </div>
-                </div>
-                <div class="container-1">
-                    <div class="container-2">
-                        Prénom:
-                    </div>
-                    <div class="container-2"> 
-                        <input type="text" value="{{ current_user.prenom }}" >
+                        <div class="container-2-1">
+                            <label for="nom">Nom</label>
+                        </div>
+                        <div class="container-2-2">
+                            <input type="text" id="nom"  class="input-info-perso" value="{{ current_user.nom }}" >
+                        </div>
                     </div>
                 </div>
                 <div class="container-1">
                     <div class="container-2">
-                        Email:  
+                        <div class="container-2-1">
+                            <label for="prenom">Prénom</label>
+                        </div>
+                        <div class="container-2-2">
+                            <input type="text" id="prenom" class="input-info-perso" value="{{ current_user.prenom }}" >
+                        </div>
                     </div>
+                </div>
+                <div class="container-1">
                     <div class="container-2">
-                        <input type="email" value="{{ current_user.email }}" >
+                        <div class="container-2-1">
+                            <label for="email">Email</label>
+                        </div>
+                        <div class="container-2-2">
+                            <input type="email" id="email" class="input-info-perso" value="{{ current_user.email }}">
+                        </div>
                     </div>
                 </div>
             </div>
 
-                <div class="container-3">
-                        <button type="submit">Enregistrer les modifications</button>
-                </div>
-                
-
             <div class="container-3">
-                <button type="submit">Demande de réinitialisation du mot de passe</button>
+                <button type="submit" style="width:250px;">Enregistrer les modifications</button>
+
+                <button type="submit" style="width:250px;">Réinitialisation password</button>
             </div>  
 
         </form>
@@ -78,12 +81,32 @@
     <fieldset>
         <legend>Connexion France Judo</legend>
         <form>
-            <div class="container-1">
-                <label for="francejudo_id">Identifiant France Judo</label>
-                <input id="francejudo_id" type="text" value="{{ current_user.francejudo_id }}" disabled>
 
-                <label for="francejudo_pwd">Mot de passe France Judo</label>
-                <input id="francejudo_pwd" type="password" value="{{ current_user.francejudo_pwd }}" disabled>
+            <div class="container-1">
+                <div class="container-2">
+                    <div class="container-2-3">
+                        <label for="francejudo_id">Identifiant France Judo</label>
+                    </div>
+                    <div class="container-2-4">
+                        <input id="francejudo_id" type="text" class="input-info-frJudo" value="{{ current_user.francejudo_id }}" disabled>
+                    </div>
+                </div>
+            </div>
+
+            <br/>
+            
+            <div class="container-1">
+                <div class="container-2">
+                    <div class="container-2-3">
+                        <label for="francejudo_pwd">Mot de passe France Judo</label>
+                    </div>
+                    <div class="container-2-4">
+                        <input id="francejudo_pwd" type="password" class="input-info-frJudo" value="{{ current_user.francejudo_pwd }}" disabled>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container-1">
 
                 <button type="submit">Enregistrer les modifications</button>
             </div>

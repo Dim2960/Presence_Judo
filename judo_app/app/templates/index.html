@@ -3,17 +3,20 @@
 {% block content %}
 
 <div class="form-container">
+
     <div class="image-container">
         <img src="static/images/user-icon.png" alt="User Icon">
     </div>
 
     <h1>Bienvenue {{ current_user.prenom }} </h1>
 
-    <form method="POST">
-    <a href="{{ url_for('main.appel_menu') }}"><button type="button">Faire un appel</button></a>
-    <a href="{{ url_for('main.statistique_generale') }}"><button type="button">Statistiques</button></a>
+    <form action="{{ url_for('main.appel_menu') }}" method="POST">
+        <button type="submit">Faire un appel</button>
     </form>
-    
+    <form action="{{ url_for('main.statistique_generale') }}" method="POST">
+        <button type="submit">Statistiques</button>
+    </form>
+
 </div>
 
 {% endblock %}
