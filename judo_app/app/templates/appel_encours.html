@@ -8,7 +8,6 @@
         <img src="static/images/user-icon.png" alt="User Icon">
     </div>
 
-    <div class="main-container">
         <div class="cours-container">
             <div class="cours-header">
                 <h1>{{nom_cours}}</h1>
@@ -29,18 +28,19 @@
                 </div>
             </div>
         </div>
-
+        
         <div class="swiper-container">
             <div class="swiper-wrapper" id="swiper-wrapper"></div>
         </div>
-    </div>
+
 </div>
     
 
-    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+    
             
     <script>
-        
+
+
         const swiperWrapper = document.getElementById('swiper-wrapper');
 
         // Objet pour suivre les personnes dont le statut a été défini
@@ -53,15 +53,17 @@
     
         function initSwiper() {
             swiper = new Swiper('.swiper-container', {
+                slidesPerView: 'auto',
                 loop: false,
-                speed: 100,
+                speed: 200,
                 navigation: {
                     nextEl: '.swiper-button-next',
                     prevEl: '.swiper-button-prev',
                 },
                 on: {
                     slideChangeTransitionEnd: function () {
-                        console.log('Slide changed to:', swiper.activeIndex);
+                        console.log('Slide changed to :', swiper.activeIndex);
+                        
                     }
                 }
             });
@@ -278,5 +280,8 @@
 
 
     </script>
+    
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+
 
 {% endblock %}

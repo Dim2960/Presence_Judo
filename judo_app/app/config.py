@@ -3,9 +3,9 @@
 # Son utilisation est soumise aux conditions définies dans le fichier LICENSE.
 
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv()
 
 class Config:
     """
@@ -21,7 +21,7 @@ class Config:
     ssl_cert = os.getenv("MYSQL_SSL_CA")
     
     SQLALCHEMY_DATABASE_URI = (
-        f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}"
+        f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}?ssl_ca={ssl_cert}" # " 
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     

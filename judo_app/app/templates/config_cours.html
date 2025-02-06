@@ -7,63 +7,55 @@
         <img src="static/images/user-icon.png" alt="User Icon">
     </div>
 
-    <h1>Configuration des cours</h1>
+        <h1>Configuration des cours</h1>
 
-    <button class="button-submit" id="toggle-form">➕ Ajout d'un cours</button>
+    <div class="container-1">
+        <div class="btn-config-cours">
+            <button class="button-submit" id="toggle-form">➕ Ajout d'un cours</button>
+        </div>      
+        
+        <div class="ctn-config-cours">        
+            <fieldset id="add-course-fieldset" style="display: none;">
+                <legend>Ajout d'un cours</legend>
 
+                <div>
+                    <form id="add-course-form" method="POST">
+                        
+                        <div class="container-5">
+                            <div>
+                                <button type="submit" >Ajouter</button>
+                            </div>
+                            <div style="margin-top: 30px; margin-bottom: 15px;">
+                                <label for="nom">Nom du cours :</label>
+                                <input type="text" id="nom" name="nom" required>
+                            </div>
+                        </div>
+                        <div id="category-container" class="container-1"></div>
+                    </form>
+                </div>
 
-    <fieldset id="add-course-fieldset" style="display: none;">
-        <legend>Ajout d'un cours</legend>
-
-        <table>
-            <tbody>
-                <tr>
-                    <td>
-                        <form id="add-course-form" method="POST">
-                            <label>Nom du cours :</label>
-                            <table>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <input type="text" id="nom" name="nom" required>
-                                        </td>
-                                        <td>
-                                            <button type="submit">Ajouter</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            <table>
-                                <tbody id="category-table"></tbody>
-                            </table>
-
-                        </form>
-                    <td>
-                    <td id="category-table">
-
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-    </fieldset>
+            </fieldset>
 
 
-    <fieldset id="update-course-fieldset" style="display: block;">
+            <fieldset id="update-course-fieldset" style="display: block;">
 
-        <legend>Cours</legend>
+                <legend>Cours</legend>
 
-        <table>
-            <tbody id="cours-table"></tbody>
-        </table>
+                <table>
+                    <tbody id="cours-table"></tbody>
+                </table>
 
-    </fieldset>
+            </fieldset>
+
+        </div>
+    </div>
 
 </div>
 
 <script>
 
     const coursTable = document.getElementById('cours-table');
-    const categTable = document.getElementById('category-table');
+    const categTable = document.getElementById('category-container');
     
 
     fetch('/api/getListCours')
@@ -107,17 +99,15 @@
 
             data.forEach(categ => {
 
-                const line = document.createElement('tr');
+                const line = document.createElement('div');
 
                 line.className = 'categ-line';
                 line.setAttribute('data-id', line.id);
                 line.innerHTML = `
-                    <td>
-                        <input type="checkbox" name="categ${categ.id}" value="${categ.id}">  
-                    </td>   
-                    <td>
-                        ${categ.nom_categorie_age}
-                    </td>
+                    <div class="container-4">
+                        <input type="checkbox" id="categ${categ.id}" name="categ${categ.id}" value="${categ.id}">
+                        <label for="categ${categ.nom_categorie_age}">${categ.nom_categorie_age}</label>
+                    </div>
                 `;
 
                 categTable.appendChild(line);

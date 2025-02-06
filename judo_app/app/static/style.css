@@ -26,6 +26,7 @@ body {
    }
 
 
+
 p {
    margin-bottom: 1rem;
    }
@@ -49,27 +50,8 @@ h1 {
    margin-bottom: 1.5rem;
    color: #05062b;
    font-weight: 400;
+   font-size: 1.2rem;
    }
-
-/* ---------------------------
-   TABLEAU
---------------------------- */
-
-/* table {
-   margin: 0;
-}
-
-table th {
-   margin: 0;
-}
-
-table tr {
-   margin: 0;
-}
-
-table td {
-   margin: 0;
-} */
 
 
 /* ---------------------------
@@ -101,9 +83,8 @@ fieldset {
    display: flex;
    flex-wrap: wrap; /* Permet de retourner à la ligne si nécessaire */
    justify-content: left; /* Centre les éléments horizontalement */
-   align-items: center; /* Centre les éléments verticalement */
+   align-items: top; /* Centre les éléments verticalement */
    gap: 15px; /* Espacement entre les éléments */
-
 }
 
 .container-2 {
@@ -158,6 +139,31 @@ fieldset {
    gap: 15px; /* Espacement entre les éléments */
 }
 
+.container-5 {
+   position: relative;
+   display: flex;
+   justify-content: flex-end;
+   
+   margin-top: -20px;
+   margin-right: -15px;
+}
+
+.container-5 button {
+   position: absolute;
+   top: 0;
+   right: 0;
+   padding: 10px 15px;
+   background-color: #007bff;
+   color: white;
+   border: none;
+   cursor: pointer;
+   border-radius: 5px;
+}
+
+.container-5 button:hover {
+   background-color: #0056b3;
+}
+
 
 .input-info-perso {
    width: 100%;
@@ -169,4 +175,14 @@ fieldset {
    width: 100%;
    max-width: 350px;
    min-width: 300px;
+}
+
+.btn-config-cours {
+margin-top: 30px;
+width: clamp(250px, 20vw, 270px);
+}
+
+.ctn-config-cours {
+   width : calc(clamp(100px, 94vw, 650px) - clamp(250px, 20vw, 270px));
+   /* width: calc(650px - clamp(100px, 20vw, 270px)); */
 }

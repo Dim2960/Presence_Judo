@@ -5,10 +5,17 @@
   background: none; 
   border: 4px solid #ffffff;; 
   cursor: pointer;
-  font-size: 8vw;
-  max-width: 12vw;
-  margin-bottom: 3vh;
-  margin-right: 4vw;
+
+  font-size: clamp(10px, 8vw, 40px);
+
+  width: 12vw;
+  max-width: 75px;
+
+  height: 12vw;
+  max-height: 75px;
+
+  margin: clamp(2px, 1vw, 10px);
+  
   /* Alignement vertical et horizontal */
   display: flex;
   justify-content: center;
