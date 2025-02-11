@@ -22,7 +22,7 @@ JudoApp est une application web permettant de suivre la présence des judokas lo
 
 ## 🛠 Installation et Exécution
 ### Prérequis
-- Python 3.x
+- Python >=3.12
 - Docker
 - Un gestionnaire de paquets comme `pip`
 - Base de données MySQL configurée avec les variables d'environnement correctes
