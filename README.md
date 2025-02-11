@@ -30,7 +30,7 @@ JudoApp est une application web permettant de suivre la présence des judokas lo
 ### Installation
 Clonez le dépôt et installez les dépendances :
 ```bash
- git clone https://github.com/votre-repo/judoapp.git
+ git clone https://github.com/Dim2960/judoapp.git
  cd judoapp
  pip install -r requirements.txt
 ```
